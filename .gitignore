@@ -1,0 +1,35 @@
+# Dependencies
+node_modules/
+
+# Build / dist
+dist/
+unpackage/
+*.local
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# IDE
+.idea/
+*.suo
+*.ntvs*
+.DS_Store
+
+# Env (keep .env.example if any)
+.env.local
+.env.*.local
+
+# SQLite (optional: track or ignore)
+# *.sqlite
+# *.db
+
+# Uploads (local files)
+api/uploads/
+admin/public/uploads/
+
+# Lock files (optional: uncomment to use single package manager)
+# package-lock.json
+# yarn.lock
