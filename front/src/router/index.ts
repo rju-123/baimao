@@ -1,7 +1,8 @@
 import pagesJson from '@/pages.json';
 
 // 路径常量
-export const HOME_PATH = '/pages/tab/home/index';
+// 应用主工作区首页：下单页
+export const HOME_PATH = '/pages/sales/order/index';
 export const LOGIN_PATH = '/pages/common/login/index';
 export const ERROR404_PATH = '/pages/common/404/index';
 

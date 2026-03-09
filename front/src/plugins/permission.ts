@@ -16,12 +16,22 @@ routes.forEach((item) => {
 });
 
 /**
+ * 规范化路径（微信等端可能传入无前导斜杠的 url）
+ */
+function normalizePath(path = '') {
+  const s = String(path).trim();
+  return s.startsWith('/') ? s : `/${s}`;
+}
+
+/**
  * 权限校验
  * @param {string} path
  * @returns {boolean} 是否有权限
  */
 export function hasPerm(path = '') {
-  if (!isPathExists(path) && path !== '/') {
+  const pathNorm = normalizePath(path);
+  const pathNoQuery = removeQueryString(pathNorm);
+  if (!isPathExists(pathNorm) && pathNoQuery !== '/') {
     uni.redirectTo({
       url: ERROR404_PATH,
     });
@@ -29,11 +39,10 @@ export function hasPerm(path = '') {
   }
   // 在白名单中或有token，直接放行
   const hasPermission
-    = whiteList.includes(removeQueryString(path)) || isLogin();
+    = whiteList.includes(pathNoQuery) || isLogin();
   if (!hasPermission) {
-    // 将用户的目标路径传递过去，这样可以实现用户登录之后，直接跳转到目标页面
     uni.redirectTo({
-      url: `${LOGIN_PATH}?redirect=${encodeURIComponent(path)}`,
+      url: `${LOGIN_PATH}?redirect=${encodeURIComponent(pathNorm)}`,
     });
   }
   return hasPermission;

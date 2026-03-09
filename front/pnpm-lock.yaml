@@ -62,15 +62,15 @@ importers:
       dayjs:
         specifier: ^1.11.19
         version: 1.11.19
+      nutui-uniapp:
+        specifier: ^1.11.1
+        version: 1.11.1(@uni-helper/uni-app-types@1.0.0-alpha.6(typescript@5.8.3)(vue@3.4.21(typescript@5.8.3)))(vue@3.4.21(typescript@5.8.3))
       pinia:
         specifier: 2.2.4
         version: 2.2.4(typescript@5.8.3)(vue@3.4.21(typescript@5.8.3))
       pinia-plugin-persistedstate:
         specifier: 4.1.3
         version: 4.1.3(pinia@2.2.4(typescript@5.8.3)(vue@3.4.21(typescript@5.8.3)))
-      uview-plus:
-        specifier: ^3.6.29
-        version: 3.6.29
       vue:
         specifier: 3.4.21
         version: 3.4.21(typescript@5.8.3)
@@ -4209,9 +4209,6 @@ packages:
     resolution: {integrity: sha512-SroPvNHxUnk+vIW/dOSfNqdy1sPEFkrTk6TUtqLCnBlo3N7TNYYkzzN7uSD6+jVjrdO4+p8nH7JzH6cIvUem6A==}
     engines: {node: '>=20'}
 
-  clipboard@2.0.11:
-    resolution: {integrity: sha512-C+0bbOqkezLIsmWSvlsXS0Q0bmkugu7jcfMIACB+RDEntIzQIkdr148we28AfSloQLRdZlYL/QYyrq05j/3Faw==}
-
   cliui@6.0.0:
     resolution: {integrity: sha512-t6wbgtoCXvAzst7QgXxJYqPt0usEfbgQdftEPbLL/cvv6HPE5VgvqCuAIDR0NgU52ds6rFwqrgakNLrHEjCbrQ==}
 
@@ -4639,9 +4636,6 @@ packages:
   delayed-stream@1.0.0:
     resolution: {integrity: sha512-ZySD7Nf91aLB0RxL4KGrKHBXl7Eds1DAmEdcoVawXnLD7SDhpNgtuII2aAkg7a7QS41jxPSZ17p4VdGnMHk3MQ==}
     engines: {node: '>=0.4.0'}
-
-  delegate@3.2.0:
-    resolution: {integrity: sha512-IofjkYBZaZivn0V8nnsMJGBr4jVLxHDheKSW88PyxS5QC4Vo9ZbZVvhzlSxY87fVq3STR6r+4cGepyHkcWOQSw==}
 
   depd@2.0.0:
     resolution: {integrity: sha512-g7nH6P6dyDioJogAAGprGpCtVImJhpPk/roCzdb3fIh61/s/nPsfR6onyMwkCAR/OlC3yBC0lESvUoQEAssIrw==}
@@ -5486,9 +5480,6 @@ packages:
   glogg@1.0.2:
     resolution: {integrity: sha512-5mwUoSuBk44Y4EshyiqcH95ZntbDdTQqA3QYSrxmzj28Ai0vXBGMH1ApSANH14j2sIRtqCEyg6PfsuP7ElOEDA==}
     engines: {node: '>= 0.10'}
-
-  good-listener@1.2.2:
-    resolution: {integrity: sha512-goW1b+d9q/HIwbVYZzZ6SsTr4IgE+WA44A0GmPIQstuOrgsFcT7VEJ48nmr9GaRtNu0XTKacFLGnBPAM6Afouw==}
 
   gopd@1.2.0:
     resolution: {integrity: sha512-ZUKRh6/kUFoAiTAtTYPZJ3hw9wNxx+BIBOijnlG9PnrJsCcSjs1wyyD6vJpaYtgnzDrKYRSqf3OO6Rfa93xsRg==}
@@ -6849,6 +6840,12 @@ packages:
   nth-check@2.1.1:
     resolution: {integrity: sha512-lqjrjmaOoAnWfMmBPL+XNnynZh2+swxiX3WUE0s4yEHI6m+AwrK2UZOimIRl3X/4QctVqS8AiZjFqyOGrMXb/w==}
 
+  nutui-uniapp@1.11.1:
+    resolution: {integrity: sha512-2/BYMcqrPXEktBEqiQ18yUEWJCWMuyOQnEfYlRAHVM6ZStzswgxfoZcksIzb3VucsMZeyJvpUVrHM66qhGWesg==}
+    peerDependencies:
+      '@uni-helper/uni-app-types': ^1.0.0-alpha.6
+      vue: 3.4.21
+
   nwsapi@2.2.23:
     resolution: {integrity: sha512-7wfH4sLbt4M0gCDzGE6vzQBo0bfTKjU7Sfpqy/7gs1qBfYz2vEJH6vXcBKpO3+6Yu1telwd0t9HpyOoLEQQbIQ==}
 
@@ -7852,9 +7849,6 @@ packages:
     resolution: {integrity: sha512-e1QtP3YL5tWww8uKaOCQ18UxIT2laNBXHjV/S2WYCiK4udiv8lkG89KRIoCjUagnAmCBurjF4zEVX2ByBbnCjQ==}
     hasBin: true
 
-  select@1.1.2:
-    resolution: {integrity: sha512-OwpTSOfy6xSs1+pwcNrv0RBMOzI39Lp3qQKUTPVVPRjCdNa5JH/oPRiqsesIskK8TVgmRiHwO4KXlV2Li9dANA==}
-
   semver@5.7.2:
     resolution: {integrity: sha512-cBznnQ9KjJqU67B52RMC65CMarK2600WFnbkcaiwWq3xy/5haFJlshgnpjovMVJ+Hff49d8GEn0b87C5pDQ10g==}
     hasBin: true
@@ -8364,9 +8358,6 @@ packages:
   timm@1.7.1:
     resolution: {integrity: sha512-IjZc9KIotudix8bMaBW6QvMuq64BrJWFs1+4V0lXwWGQZwH+LnX87doAYhem4caOEusRP9/g6jVDQmZ8XOk1nw==}
 
-  tiny-emitter@2.1.0:
-    resolution: {integrity: sha512-NB6Dk1A9xgQPMoGqC5CVXn123gWyte215ONT5Pp5a0yt4nlEoO1ZWeCwpncaekPHXO60i47ihFnZPiRPjRMq4Q==}
-
   tinycolor2@1.6.0:
     resolution: {integrity: sha512-XPaBkWQJdsf3pLKJV9p4qN/S+fm2Oj8AIPo1BTUhg5oxkvm9+SVEGFdhyOz7tTdUTfvxMiAs4sp6/eZO2Ew+pw==}
 
@@ -8744,10 +8735,6 @@ packages:
     resolution: {integrity: sha512-HjSDRw6gZE5JMggctHBcjVak08+KEVhSIiDzFnT9S9aegmp85S/bReBVTb4QTFaRNptJ9kuYaNhnbNEOkbKb/A==}
     deprecated: Please upgrade  to version 7 or higher.  Older versions may use Math.random() in certain circumstances, which is known to be problematic.  See https://v8.dev/blog/math-random for details.
     hasBin: true
-
-  uview-plus@3.6.29:
-    resolution: {integrity: sha512-zK522LR074rB4k3EARysmjsoOh+WjtFevIpvmV1wjVFqS3TT6brLZLd+gKa1ewxBsIgIPDTAabmnHWPsW9DWkQ==}
-    engines: {HBuilderX: ^3.1.0, uni-app: ^4.66, uni-app-x: ''}
 
   v8-to-istanbul@8.1.1:
     resolution: {integrity: sha512-FGtKtv3xIpR6BYhvgH8MI/y78oT7d8Au3ww4QIxymrCtZEh5b8gCw2siywE+puhEmuWKDtmfrvF5UlB298ut3w==}
@@ -15132,12 +15119,6 @@ snapshots:
       slice-ansi: 7.1.2
       string-width: 8.1.0
 
-  clipboard@2.0.11:
-    dependencies:
-      good-listener: 1.2.2
-      select: 1.1.2
-      tiny-emitter: 2.1.0
-
   cliui@6.0.0:
     dependencies:
       string-width: 4.2.3
@@ -15558,8 +15539,6 @@ snapshots:
       slash: 3.0.0
 
   delayed-stream@1.0.0: {}
-
-  delegate@3.2.0: {}
 
   depd@2.0.0: {}
 
@@ -16579,10 +16558,6 @@ snapshots:
   glogg@1.0.2:
     dependencies:
       sparkles: 1.0.1
-
-  good-listener@1.2.2:
-    dependencies:
-      delegate: 3.2.0
 
   gopd@1.2.0: {}
 
@@ -18476,6 +18451,11 @@ snapshots:
     dependencies:
       boolbase: 1.0.0
 
+  nutui-uniapp@1.11.1(@uni-helper/uni-app-types@1.0.0-alpha.6(typescript@5.8.3)(vue@3.4.21(typescript@5.8.3)))(vue@3.4.21(typescript@5.8.3)):
+    dependencies:
+      '@uni-helper/uni-app-types': 1.0.0-alpha.6(typescript@5.8.3)(vue@3.4.21(typescript@5.8.3))
+      vue: 3.4.21(typescript@5.8.3)
+
   nwsapi@2.2.23: {}
 
   nypm@0.6.1:
@@ -19488,8 +19468,6 @@ snapshots:
     dependencies:
       commander: 2.20.3
 
-  select@1.1.2: {}
-
   semver@5.7.2: {}
 
   semver@6.3.1: {}
@@ -20097,8 +20075,6 @@ snapshots:
 
   timm@1.7.1: {}
 
-  tiny-emitter@2.1.0: {}
-
   tinycolor2@1.6.0: {}
 
   tinyexec@1.0.1: {}
@@ -20542,11 +20518,6 @@ snapshots:
   utils-merge@1.0.1: {}
 
   uuid@3.4.0: {}
-
-  uview-plus@3.6.29:
-    dependencies:
-      clipboard: 2.0.11
-      dayjs: 1.11.19
 
   v8-to-istanbul@8.1.1:
     dependencies:

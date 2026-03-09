@@ -26,7 +26,6 @@ onHide(() => {
 </script>
 
 <style lang="scss">
-/* 每个页面公共css */
-@import 'uview-plus/index.scss';
+/* 每个页面公共 css，NutUI 通过 easycom 按需引入 */
 @import '@/static/styles/common.scss';
 </style>

@@ -413,6 +413,37 @@ pnpm upload prod
   - **描述信息 (`desc`):** 包含 `[环境] + package.json 版本 + 日期 + Git Commit Short Hash`。
 
 ## ❌ 常见问题 (FAQ)
+
+#### 0. 重新编译后 `dist/dev/mp-weixin` 或 `dist/build/mp-weixin` 里文件全部消失？
+
+**原因：** 编译时会**先清空**输出目录再写入新文件。若编译中途报错、中断或未正常完成，目录会被清空且没有新文件写入。
+
+**处理步骤：**
+
+1. 在项目根目录 **`front`** 下打开终端，执行其一：
+   - **开发模式（带热更新）：** `pnpm run dev:mp-weixin`  
+     产物目录：`front/dist/dev/mp-weixin`
+   - **生产构建（单次）：** `pnpm run build:mp-weixin` 或 `pnpm run regenerate:mp-weixin`  
+     产物目录：`front/dist/build/mp-weixin`
+
+2. 等待控制台出现编译完成、无报错后再关闭。若使用 HBuilderX，请用「运行」→「运行到小程序模拟器」→「微信开发者工具」，确保一次完整编译成功。
+
+3. 在微信开发者工具中导入/刷新项目时，选择上述产物目录（开发用选 `dist/dev/mp-weixin`，上传用选 `dist/build/mp-weixin`）。
+
+**注意：** `dist` 为编译产物，未纳入 Git。请勿手动修改 `dist` 内文件，修改会在下次编译时被覆盖；页面与路由以 `src/pages.json` 为准。
+
+#### 0.1 报错「app.json 文件内容错误 / app.json is not found」或「agree-privacy 组件 index.wxml 不存在」？
+
+**原因：** 微信开发者工具打开的目录不正确。必须打开**编译产物目录**，不能打开源码目录 `front` 或项目根目录。
+
+**处理步骤：**
+
+1. 在 `front` 下执行 `pnpm run dev:mp-weixin` 或 `pnpm run build:mp-weixin`，等待编译完成。
+2. 在微信开发者工具中「导入项目」或「+」添加项目时，**项目目录**选择：
+   - 开发调试：`front/dist/dev/mp-weixin`
+   - 上传代码：`front/dist/build/mp-weixin`
+3. 不要选择 `front`、`c:/baimao` 等上级目录。本项目已在构建后自动为 `project.config.json` 写入 `miniprogramRoot: "./"`，且已排除未使用的 `agree-privacy` 组件引用，按上述目录打开即可正常运行。
+
 #### 1. 关于包体积分析不准确？
 
   微信开发者工具内置的打包分析不准确。本项目已集成 `rollup-plugin-visualizer`，如需使用，请在 Vite 配置中移除相关注释。

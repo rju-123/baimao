@@ -35,13 +35,16 @@ export default defineConfig(({ command, mode }): UserConfig => {
       open: true,
       proxy: createViteProxy(env),
     },
-    // 设置scss的api类型为modern-compiler
+    // 设置scss的api类型为modern-compiler，并为 NutUI 注入基础变量
     css: {
       preprocessorOptions: {
         scss: {
           api: 'modern-compiler',
           // 消除一些不必要的警告
           silenceDeprecations: ['legacy-js-api'],
+          // 给每个 scss 注入 NutUI 的变量定义，解决 $dark-color 等未定义问题
+          // 注意：这里使用 @import 而不是 @use，避免 \"@use rules must be written before any other rules\" 报错
+          additionalData: '@import \"nutui-uniapp/styles/variables.scss\";',
         },
       },
     },

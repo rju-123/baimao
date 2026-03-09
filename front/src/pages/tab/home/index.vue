@@ -12,11 +12,6 @@
         <view class="i-mdi-github text-40rpx" />
       </view>
     </view>
-
-    <!-- #ifdef MP-WEIXIN -->
-    <!-- 隐私协议组件 -->
-    <agree-privacy v-model="showAgreePrivacy" :disable-check-privacy="false" @agree="handleAgree" />
-    <!-- #endif -->
   </view>
 </template>
 
@@ -39,20 +34,13 @@ onShareTimeline();
 const title = ref<string>();
 title.value = import.meta.env.VITE_APP_TITLE;
 
-const showAgreePrivacy = ref(false);
-
-// 同意隐私协议
-function handleAgree() {
-  console.log('同意隐私政策');
-}
-
 // 打开github
 function toGithub() {
-  if (window?.open) {
+  if (typeof window !== 'undefined' && window?.open) {
     window.open('https://github.com/oyjt/uniapp-vue3-template');
   }
   else {
-    uni.$u.toast('请使用浏览器打开');
+    uni.showToast({ title: '请使用浏览器打开', icon: 'none' });
   }
 }
 </script>

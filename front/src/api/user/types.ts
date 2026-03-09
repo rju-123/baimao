@@ -16,9 +16,15 @@ export interface LoginReq {
 
 export interface LoginRes {
   token: string;
-  user_id: number;
-  user_name: string;
-  avatar: string;
+  user: {
+    id: number;
+    phone: string;
+    name: string;
+    role: string;
+    isAdmin: boolean;
+    companyId: number | null;
+    points: number;
+  };
 }
 
 export interface LoginByCodeReq {

@@ -1,25 +1,18 @@
 <template>
-  <div class="not-found">
-    <u-navbar left-icon-size="40rpx" @left-click="handleBack" />
-    <u-empty
-      mode="page"
-      text-size="20"
-      text="页面不存在"
-      icon="/static/images/404.png"
-      width="380"
-      height="380"
-    />
-  </div>
+  <view class="not-found">
+    <nut-navbar left-arrow @click-back="handleBack" />
+    <nut-empty description="页面不存在" :image="emptyImg" />
+  </view>
 </template>
 
 <script lang="ts" setup>
+import { route } from '@/utils/uni-helpers';
 import { HOME_PATH } from '@/router';
 
+const emptyImg = '/static/images/404.png';
+
 function handleBack() {
-  uni.$u.route({
-    type: 'switchTab',
-    url: HOME_PATH,
-  });
+  route({ type: 'switchTab', url: HOME_PATH });
 }
 </script>
 

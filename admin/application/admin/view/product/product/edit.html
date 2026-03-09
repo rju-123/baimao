@@ -1,0 +1,72 @@
+<form id="edit-form" class="form-horizontal" role="form" data-toggle="validator" method="POST" action="">
+    {:token()}
+    <input type="hidden" name="row[id]" value="{$row.id|htmlentities}">
+    <div class="form-group">
+        <label for="c-name" class="control-label col-xs-12 col-sm-2">{:__('Name')}:</label>
+        <div class="col-xs-12 col-sm-4">
+            <input id="c-name" data-rule="required" class="form-control" name="row[name]" type="text" value="{$row.name|htmlentities}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Type')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            {:build_radios('row[type]', ['product'=>__('Product'), 'service'=>__('Service')], $row.type)}
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="c-customer" class="control-label col-xs-12 col-sm-2">{:__('Customer')}:</label>
+        <div class="col-xs-12 col-sm-4">
+            <input id="c-customer" class="form-control" name="row[customer]" type="text" value="{$row.customer|htmlentities}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="c-brief" class="control-label col-xs-12 col-sm-2">{:__('Brief')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <textarea id="c-brief" class="form-control" name="row[brief]" rows="3">{$row.brief|htmlentities}</textarea>
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="c-detail" class="control-label col-xs-12 col-sm-2">{:__('Detail')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <textarea id="c-detail" class="form-control editor" name="row[detail]" rows="6">{$row.detail|htmlentities}</textarea>
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="c-price" class="control-label col-xs-12 col-sm-2">{:__('Price')}:</label>
+        <div class="col-xs-12 col-sm-4">
+            <input id="c-price" data-rule="required;number" class="form-control" name="row[price]" type="number" step="0.01" value="{$row.price|htmlentities}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="c-discount_price" class="control-label col-xs-12 col-sm-2">{:__('Discount price')}:</label>
+        <div class="col-xs-12 col-sm-4">
+            <input id="c-discount_price" data-rule="number" class="form-control" name="row[discount_price]" type="number" step="0.01" value="{$row.discount_price|htmlentities}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="c-inventory" class="control-label col-xs-12 col-sm-2">{:__('Inventory')}:</label>
+        <div class="col-xs-12 col-sm-4">
+            <input id="c-inventory" data-rule="integer" class="form-control" name="row[inventory]" type="number" value="{$row.inventory|htmlentities}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="c-delivery_time" class="control-label col-xs-12 col-sm-2">{:__('Delivery time')}:</label>
+        <div class="col-xs-12 col-sm-4">
+            <input id="c-delivery_time" class="form-control datetimepicker" data-date-format="YYYY-MM-DD" name="row[delivery_time]" type="text" value="{$row.delivery_time|htmlentities}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Status')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            {:build_radios('row[status]', ['active'=>__('Active'), 'expired'=>__('Expired')], $row.status)}
+        </div>
+    </div>
+    <div class="form-group layer-footer">
+        <label class="control-label col-xs-12 col-sm-2"></label>
+        <div class="col-xs-12 col-sm-8">
+            <button type="submit" class="btn btn-primary btn-embossed disabled">{:__('OK')}</button>
+            <button type="reset" class="btn btn-default btn-embossed">{:__('Reset')}</button>
+        </div>
+    </div>
+</form>
+

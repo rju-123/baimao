@@ -1,11 +1,12 @@
 // 主题CSS变量
 :root,
 page {
-  // 主色调
-  --theme-primary: #21d59d;
-  --theme-success: #3ed268;
-  --theme-warning: #fe9831;
-  --theme-error: #fa4e62;
+  // 主色调 - PRD 微信蓝 / 绿 / 红
+  --theme-primary: #0A7AFF;
+  --theme-primary-dark: #0960d9;
+  --theme-success: #34C759;
+  --theme-warning: #f0ad4e;
+  --theme-error: #FF3B30;
 
   // 文字颜色
   --theme-main-color: #1b233b;

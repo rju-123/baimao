@@ -11,6 +11,7 @@ import { AutoImportPlugin } from './autoImport';
 import { AutoComponentsPlugin } from './component';
 import { MCPPlugin } from './mcp';
 import { UnoCSSPlugin } from './unocss';
+import { PatchMpWeixinProjectConfigPlugin } from './patchMpWeixinProjectConfig';
 
 export default function createVitePlugins(isBuild: boolean) {
   const vitePlugins: (PluginOption | PluginOption[])[] = [
@@ -22,6 +23,8 @@ export default function createVitePlugins(isBuild: boolean) {
     AutoComponentsPlugin(),
     // uni支持(兼容性写法，当type为module时，必须要这样写)
     (UniPlugin as any).default(),
+    // 微信小程序：构建后修补 project.config.json，避免开发者工具报 app.json 未找到
+    PatchMpWeixinProjectConfigPlugin(),
     ViteRestart({
       // 通过这个插件，在修改vite.config.js文件则不需要重新运行也生效配置
       restart: ['vite.config.ts'],
