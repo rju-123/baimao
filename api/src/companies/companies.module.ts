@@ -5,7 +5,7 @@ import { CompaniesService } from './companies.service';
 import { CompaniesController } from './companies.controller';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Company])],
+  imports: [TypeOrmModule.forFeature([Company], 'mysql')],
   providers: [CompaniesService],
   controllers: [CompaniesController],
   exports: [CompaniesService],

@@ -9,7 +9,7 @@ return [
     'Product name'     => '产品名称',
     'Product brief'    => '产品简介',
     'Product detail'   => '产品详情',
-    'Product customer' => '产品客户',
+    'Product customer' => '客户信息',
     'Unit price'       => '单价',
     'Quantity'         => '数量',
     'Amount'           => '原始金额',

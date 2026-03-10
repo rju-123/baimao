@@ -6,7 +6,7 @@ return [
     'Type'           => '类型',
     'Product'        => '产品',
     'Service'        => '服务',
-    'Customer'       => '客户',
+    'Customer'       => '客户信息',
     'Brief'          => '简介',
     'Detail'         => '详情',
     'Price'          => '价格',

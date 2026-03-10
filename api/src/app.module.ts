@@ -19,6 +19,8 @@ import { PointsMallItem } from './points/points-mall-item.entity';
 import { ExchangeRecord } from './points/exchange-record.entity';
 import { PartnerInvoice } from './partner/partner-invoice.entity';
 import { PartnerModule } from './partner/partner.module';
+import { Sales } from './sales/sales.entity';
+import { SalesModule } from './sales/sales.module';
 
 @Module({
   imports: [
@@ -26,7 +28,7 @@ import { PartnerModule } from './partner/partner.module';
     TypeOrmModule.forRoot({
       type: 'better-sqlite3',
       database: 'database.sqlite',
-      entities: [User, Company, Address, Coupon, PointsMallItem, ExchangeRecord, PartnerInvoice],
+      entities: [User, Address, Coupon, PointsMallItem, ExchangeRecord, PartnerInvoice],
       synchronize: true,
     }),
     // 第二个连接：连接到后台管理系统使用的 MySQL，专门用于产品和订单
@@ -38,7 +40,7 @@ import { PartnerModule } from './partner/partner.module';
       username: 'root',
       password: 'admin123',
       database: 'baimao_admin',
-      entities: [Product, Order],
+      entities: [Product, Order, Company, Sales],
       synchronize: false,
     }),
     UsersModule,
@@ -49,6 +51,7 @@ import { PartnerModule } from './partner/partner.module';
     CouponsModule,
     PointsModule,
     PartnerModule,
+    SalesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

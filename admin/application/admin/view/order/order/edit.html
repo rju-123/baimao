@@ -46,9 +46,7 @@
     <div class="form-group">
         <label for="c-customer_info" class="control-label col-xs-12 col-sm-2">{:__('Customer info')}:</label>
         <div class="col-xs-12 col-sm-8">
-            <textarea id="c-customer_info" readonly class="form-control" rows="2">
-{$row.customer_name|htmlentities} / {$row.customer_phone|htmlentities} / {$row.customer_company|htmlentities}
-            </textarea>
+            <textarea id="c-customer_info" readonly class="form-control" rows="2">{$row.product_customer|htmlentities}</textarea>
         </div>
     </div>
     <div class="form-group">

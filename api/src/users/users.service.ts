@@ -2,12 +2,14 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './user.entity';
+import { SalesService } from '../sales/sales.service';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User)
     private readonly usersRepo: Repository<User>,
+    private readonly salesService: SalesService,
   ) {}
 
   findById(id: number) {
@@ -30,6 +32,7 @@ export class UsersService {
       });
       await this.usersRepo.save(user);
     }
+    await this.salesService.upsertByPhone(phone, user.name, user.companyId);
     return user;
   }
 
@@ -47,7 +50,9 @@ export class UsersService {
     if (!user)
       return null;
     user.companyId = companyId;
-    return this.usersRepo.save(user);
+    const saved = await this.usersRepo.save(user);
+    await this.salesService.upsertByPhone(user.phone, undefined, companyId);
+    return saved;
   }
 }
 

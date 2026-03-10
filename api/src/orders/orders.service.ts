@@ -84,11 +84,27 @@ export class OrdersService {
     return this.ordersRepo.findOne({ where: { id } });
   }
 
-  private async generateOrderNo() {
-    const count = await this.ordersRepo.count();
-    const seq = String(count + 1).padStart(3, '0');
+  /**
+   * 生成唯一订单号 ORD-{年}-{序号}，基于当年已有最大订单号递增，避免与历史/后台数据重复
+   */
+  private async generateOrderNo(): Promise<string> {
     const year = new Date().getFullYear();
-    return `ORD-${year}-${seq}`;
+    const prefix = `ORD-${year}-`;
+    const raw = await this.ordersRepo
+      .createQueryBuilder('o')
+      .select('MAX(o.orderNo)', 'maxNo')
+      .where('o.orderNo LIKE :prefix', { prefix: `${prefix}%` })
+      .getRawOne<{ maxNo: string | null }>();
+    const maxNo = raw?.maxNo ?? null;
+    let seq = 1;
+    if (maxNo && typeof maxNo === 'string' && maxNo.startsWith(prefix)) {
+      const numPart = maxNo.slice(prefix.length);
+      const num = parseInt(numPart, 10);
+      if (!Number.isNaN(num) && num >= 1)
+        seq = num + 1;
+    }
+    const seqStr = String(seq).padStart(3, '0');
+    return `${prefix}${seqStr}`;
   }
 }
 
