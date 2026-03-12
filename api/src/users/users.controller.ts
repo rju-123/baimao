@@ -73,7 +73,7 @@ export class UsersController {
   async updateCompany(@Param('id') id: string, @Body() body: any) {
     const dto = plainToInstance(UpdateCompanyDto, body);
     await validateOrReject(dto);
-    const user = await this.usersService.updateCompany(Number(id), dto.companyId);
+    const user = await this.usersService.updateCompany(Number(id), dto.companyId, dto.name);
     return {
       code: 200,
       message: '公司已更新',

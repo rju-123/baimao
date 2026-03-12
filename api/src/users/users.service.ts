@@ -45,13 +45,15 @@ export class UsersService {
     return user;
   }
 
-  async updateCompany(userId: number, companyId: number) {
+  async updateCompany(userId: number, companyId: number, name?: string) {
     const user = await this.findById(userId);
     if (!user)
       return null;
     user.companyId = companyId;
+    if (name && name.trim())
+      user.name = name.trim();
     const saved = await this.usersRepo.save(user);
-    await this.salesService.upsertByPhone(user.phone, undefined, companyId);
+    await this.salesService.upsertByPhone(user.phone, name ?? user.name, companyId);
     return saved;
   }
 }

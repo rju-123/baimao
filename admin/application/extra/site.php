@@ -3,9 +3,8 @@
 return array (
   'name' => '白帽子后台管理系统',
   'beian' => '',
-  // 使用 FastAdmin 官方演示站的静态资源 CDN，避免本地缺少 public/assets 导致后台样式和脚本无法加载
-  'cdnurl' => 'https://demo.fastadmin.net',
-  'version' => '1.0.1',
+  'cdnurl' => '',
+  'version' => '1.0.16',
   'timezone' => 'Asia/Shanghai',
   'forbiddenip' => '',
   'languages' => 
@@ -14,7 +13,6 @@ return array (
     'frontend' => 'zh-cn',
   ),
   'fixedpage' => 'dashboard',
-  'agreement' => '协议内容',
   'categorytype' => 
   array (
     'default' => 'Default',
@@ -30,12 +28,6 @@ return array (
     'user' => 'User',
     'example' => 'Example',
   ),
-  'attachmentcategory' => 
-  array (
-    'category1' => 'Category1',
-    'category2' => 'Category2',
-    'custom' => 'Custom',
-  ),
   'mail_type' => '1',
   'mail_smtp_host' => 'smtp.qq.com',
   'mail_smtp_port' => '465',
@@ -43,4 +35,10 @@ return array (
   'mail_smtp_pass' => '',
   'mail_verify_type' => '2',
   'mail_from' => '',
+  'attachmentcategory' => 
+  array (
+    'category1' => 'Category1',
+    'category2' => 'Category2',
+    'custom' => 'Custom',
+  ),
 );

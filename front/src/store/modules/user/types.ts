@@ -11,6 +11,10 @@ export interface UserState {
    * 当前小程序中的角色选择：sales / partner
    */
   currentRole?: 'sales' | 'partner' | '';
+  /**
+   * 当前积分
+   */
+  points?: number;
 }
 
 export type providerType

@@ -18,6 +18,16 @@ export class PointsController {
     };
   }
 
+  @Get('mall-items/:id')
+  async getItem(@Param('id') id: string) {
+    const item = await this.pointsService.getItem(Number(id));
+    return {
+      code: 200,
+      message: 'OK',
+      result: item,
+    };
+  }
+
   @Get('exchange-records')
   async listRecords(@Query('userId') userId: string) {
     const data = await this.pointsService.listRecords(Number(userId));
@@ -25,6 +35,16 @@ export class PointsController {
       code: 200,
       message: 'OK',
       result: data,
+    };
+  }
+
+  @Get('exchange-records/:id')
+  async getRecord(@Param('id') id: string) {
+    const record = await this.pointsService.getRecord(Number(id));
+    return {
+      code: 200,
+      message: 'OK',
+      result: record,
     };
   }
 

@@ -1,4 +1,4 @@
-import type { LoginByCodeReq, LoginByCodeRes, LoginReq, LoginRes, ProfileReq, ProfileRes } from './types';
+import type { LoginByCodeReq, LoginByCodeRes, LoginReq, LoginRes, ProfileReq, ProfileRes, UserInfoRes } from './types';
 /**
 * 用户信息相关接口
 */
@@ -7,6 +7,9 @@ import { get, post, request } from '@/utils/request';
 
 /** 登录 */
 export const login = (data: LoginReq) => post<LoginRes>('/auth/login', { data, custom: { auth: false } });
+
+/** 根据用户 ID 拉取最新用户信息（含积分），用于刷新本地缓存的积分等 */
+export const getUser = (id: number) => get<UserInfoRes>(`/users/${id}`);
 
 /** 获取用户信息（占位，后端暂未实现） */
 export const profile = (params?: ProfileReq) => get<ProfileRes>('/user/profile', { params });
@@ -17,10 +20,10 @@ export const loginByCode = (data: LoginByCodeReq) => post<LoginByCodeRes>('/user
 /** 退出登录（占位） */
 export const logout = () => post<CommonRes>('/user/logout');
 
-/** 更新当前用户所属公司（对接 PUT /users/:id/company） */
-export const updateCompany = (userId: number, companyId: number) =>
+/** 更新当前用户所属公司与姓名（对接 PUT /users/:id/company） */
+export const updateCompany = (userId: number, companyId: number, name?: string) =>
   request<CommonRes>({
     url: `/users/${userId}/company`,
     method: 'PUT',
-    data: { companyId },
+    data: { companyId, name },
   });

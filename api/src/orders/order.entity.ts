@@ -12,6 +12,14 @@ export class Order {
   @Column({ name: 'user_id' })
   userId: number;
 
+  /** 销售人员姓名快照（来自下单时的小程序用户名称） */
+  @Column({ name: 'sales_name', type: 'varchar', length: 64, default: '' })
+  salesName: string;
+
+  /** 销售人员手机号快照（用于后台统计进行中订单等） */
+  @Column({ name: 'sales_phone', type: 'varchar', length: 50, default: '' })
+  salesPhone: string;
+
   @Column({ name: 'company_id', type: 'int', nullable: true })
   companyId: number | null;
 
@@ -84,6 +92,14 @@ export class Order {
    */
   @Column({ default: 'pending_contract' })
   status: string;
+
+  /** 电子合同状态：none / uploaded / signed ... */
+  @Column({ name: 'contract_status', type: 'varchar', length: 32, default: 'none' })
+  contractStatus: string;
+
+  /** 电子合同 PDF 文件访问地址 */
+  @Column({ name: 'contract_url', type: 'varchar', length: 255, default: '' })
+  contractUrl: string;
 
   @Column({ name: 'createtime', type: 'int', nullable: true })
   createtime: number | null;

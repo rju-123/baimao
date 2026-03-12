@@ -1,6 +1,7 @@
 import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
-@Entity('exchange_records')
+// 映射到后台管理系统 MySQL 中的兑换记录表
+@Entity('fa_exchange_records')
 export class ExchangeRecord {
   @PrimaryGeneratedColumn()
   id: number;

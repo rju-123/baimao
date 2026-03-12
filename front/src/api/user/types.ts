@@ -14,17 +14,20 @@ export interface LoginReq {
   code: string;
 }
 
+/** 登录/拉取用户信息时后端返回的用户对象 */
+export interface UserInfoRes {
+  id: number;
+  phone: string;
+  name: string;
+  role: string;
+  isAdmin: boolean;
+  companyId: number | null;
+  points: number;
+}
+
 export interface LoginRes {
   token: string;
-  user: {
-    id: number;
-    phone: string;
-    name: string;
-    role: string;
-    isAdmin: boolean;
-    companyId: number | null;
-    points: number;
-  };
+  user: UserInfoRes;
 }
 
 export interface LoginByCodeReq {

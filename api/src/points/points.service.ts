@@ -4,19 +4,23 @@ import { Repository } from 'typeorm';
 import { UsersService } from '../users/users.service';
 import { PointsMallItem } from './points-mall-item.entity';
 import { ExchangeRecord } from './exchange-record.entity';
+import { PointsCode } from './points-code.entity';
 import { CreateExchangeDto } from './dto/create-exchange.dto';
 
 @Injectable()
 export class PointsService implements OnModuleInit {
   constructor(
-    @InjectRepository(PointsMallItem)
+    @InjectRepository(PointsMallItem, 'mysql')
     private readonly itemsRepo: Repository<PointsMallItem>,
-    @InjectRepository(ExchangeRecord)
+    @InjectRepository(ExchangeRecord, 'mysql')
     private readonly recordsRepo: Repository<ExchangeRecord>,
+    @InjectRepository(PointsCode, 'mysql')
+    private readonly codesRepo: Repository<PointsCode>,
     private readonly usersService: UsersService,
   ) {}
 
   async onModuleInit() {
+    // 若积分商城商品表为空，填充一批默认示例数据（仅在首次初始化时执行）
     const count = await this.itemsRepo.count();
     if (count === 0) {
       const seed: Partial<PointsMallItem>[] = [
@@ -36,11 +40,19 @@ export class PointsService implements OnModuleInit {
     return this.itemsRepo.find({ where });
   }
 
+  getItem(id: number) {
+    return this.itemsRepo.findOne({ where: { id } });
+  }
+
   listRecords(userId: number) {
     return this.recordsRepo.find({
       where: { userId },
       order: { createdAt: 'DESC' },
     });
+  }
+
+  getRecord(id: number) {
+    return this.recordsRepo.findOne({ where: { id } });
   }
 
   async createExchange(dto: CreateExchangeDto) {
@@ -66,6 +78,23 @@ export class PointsService implements OnModuleInit {
       await this.itemsRepo.save(item);
     }
 
+    let assignedCode: string | null = null;
+    let usedCode: PointsCode | null = null;
+    if (item.type === 'virtual') {
+      // 从券码池中取出一条未使用券码
+      usedCode = await this.codesRepo.findOne({
+        where: {
+          itemId: item.id,
+          status: 'unused',
+        },
+      });
+      if (!usedCode)
+        throw new Error('券码已用完，请联系管理员补充库存');
+      assignedCode = usedCode.code;
+    }
+
+    const now = Math.floor(Date.now() / 1000);
+
     const record = this.recordsRepo.create({
       userId: dto.userId,
       itemId: dto.itemId,
@@ -74,9 +103,27 @@ export class PointsService implements OnModuleInit {
       addressSnapshot: dto.addressSnapshot ?? null,
       kind: item.type,
       status: item.type === 'physical' ? 'pending_shipment' : 'completed',
-      code: item.type === 'virtual' ? `C${Date.now().toString(36).toUpperCase()}` : null,
+      code: assignedCode,
     });
-    return this.recordsRepo.save(record);
+    const saved = await this.recordsRepo.save(record);
+
+    // 标记券码已使用，并同步批次已使用数
+    if (usedCode) {
+      usedCode.status = 'used';
+      usedCode.recordId = saved.id;
+      usedCode.usedAt = now;
+      await this.codesRepo.save(usedCode);
+
+      // 同步更新批次表中的已使用数，便于后台列表展示
+      if (usedCode.batchId) {
+        await this.recordsRepo.query(
+          'UPDATE fa_points_code_batches SET used = used + 1 WHERE id = ?',
+          [usedCode.batchId],
+        );
+      }
+    }
+
+    return saved;
   }
 }
 

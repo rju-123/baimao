@@ -32,6 +32,24 @@ const useUserStore = defineStore('user', {
       const result = await UserApi.profile();
       this.setInfo(result);
     },
+    /** 根据当前 user_id 从后端拉取最新用户信息（含积分），更新 store */
+    async refreshUserInfo() {
+      const id = this.user_id;
+      if (!id)
+        return;
+      try {
+        const user = await UserApi.getUser(Number(id));
+        this.setInfo({
+          user_name: user.name || user.phone,
+          phone: user.phone,
+          companyId: user.companyId ?? undefined,
+          points: user.points ?? 0,
+        });
+      }
+      catch (e) {
+        console.warn('refreshUserInfo failed', e);
+      }
+    },
     // 异步登录并存储token
     login(loginForm: LoginReq) {
       return new Promise((resolve, reject) => {
@@ -46,6 +64,8 @@ const useUserStore = defineStore('user', {
             user_name: res.user.name || res.user.phone,
             phone: res.user.phone,
             companyId: res.user.companyId,
+            // 积分余额（若后端暂未返回则回退为 0）
+            points: (res.user as any).points ?? 0,
             token,
             // 默认使用后端角色作为当前角色，后续在角色选择页可再覆盖
             currentRole: (res.user.role as any) || 'sales',

@@ -12,7 +12,7 @@ export class ProductsController {
   ) {
     const data = await this.productsService.findAll({
       type,
-      status: status ?? 'active',
+      status,
     });
     return {
       code: 200,

@@ -1,0 +1,58 @@
+<form id="add-form" class="form-horizontal" role="form" data-toggle="validator" method="POST" action="">
+    {:token()}
+    <div class="form-group">
+        <label for="c-item_id" class="control-label col-xs-12 col-sm-2">{:__('Item id')}:</label>
+        <div class="col-xs-12 col-sm-4">
+            <select id="c-item_id" class="form-control selectpicker" name="row[item_id]" data-live-search="true">
+                {volist name="virtualItems" id="item"}
+                <option value="{$item.id}">{$item.id} {$item.name|htmlentities}</option>
+                {/volist}
+            </select>
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="c-batch_code" class="control-label col-xs-12 col-sm-2">{:__('Batch code')}:</label>
+        <div class="col-xs-12 col-sm-4">
+            <input id="c-batch_code" class="form-control" name="row[batch_code]" type="text" value="" placeholder="可留空自动生成">
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="c-filename" class="control-label col-xs-12 col-sm-2">{:__('Filename')}:</label>
+        <div class="col-xs-12 col-sm-4">
+            <input id="c-filename" class="form-control" name="row[filename]" type="text" value="" placeholder="可填写导入来源说明">
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="c-file" class="control-label col-xs-12 col-sm-2">导入文件:</label>
+        <div class="col-xs-12 col-sm-6">
+            <div class="input-group">
+                <input id="c-file" data-rule="required" class="form-control" name="row[file]" type="text" value="" placeholder="请选择包含券码列的 Excel 或文本文件">
+                <div class="input-group-addon no-border no-padding">
+                    <span class="btn btn-danger plupload" data-input-id="c-file" data-mimetype="text/plain,text/csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,.txt,.csv,.xls,.xlsx" data-multiple="false"><i class="fa fa-upload"></i> {:__('Upload')}</span>
+                    <span class="btn btn-primary fachoose" data-input-id="c-file"><i class="fa fa-list"></i> {:__('Choose')}</span>
+                </div>
+            </div>
+            <span class="help-block">支持 txt/csv/xls/xlsx；Excel 请保证首行有“券码”列，从该列读取券码</span>
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="c-expire_at" class="control-label col-xs-12 col-sm-2">{:__('Expire at')}:</label>
+        <div class="col-xs-12 col-sm-4">
+            <input id="c-expire_at" class="form-control datetimepicker" name="row[expire_at]" type="text" value="">
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="c-remark" class="control-label col-xs-12 col-sm-2">{:__('Remark')}:</label>
+        <div class="col-xs-12 col-sm-6">
+            <input id="c-remark" class="form-control" name="row[remark]" type="text" value="">
+        </div>
+    </div>
+    <div class="form-group layer-footer">
+        <label class="control-label col-xs-12 col-sm-2"></label>
+        <div class="col-xs-12 col-sm-8">
+            <button type="submit" class="btn btn-primary btn-embossed disabled">{:__('OK')}</button>
+            <button type="reset" class="btn btn-default btn-embossed">{:__('Reset')}</button>
+        </div>
+    </div>
+</form>
+

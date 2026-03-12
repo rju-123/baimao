@@ -1,0 +1,65 @@
+<form id="edit-form" class="form-horizontal" role="form" data-toggle="validator" method="POST" action="">
+    {:token()}
+    <input type="hidden" name="row[id]" value="{$row.id|htmlentities}">
+    <div class="form-group">
+        <label for="c-userId" class="control-label col-xs-12 col-sm-2">{:__('User id')}:</label>
+        <div class="col-xs-12 col-sm-4">
+            <input id="c-userId" class="form-control" name="row[userId]" type="number" value="{$row.userId|htmlentities}" readonly>
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="c-itemId" class="control-label col-xs-12 col-sm-2">{:__('Item id')}:</label>
+        <div class="col-xs-12 col-sm-4">
+            <input id="c-itemId" class="form-control" name="row[itemId]" type="number" value="{$row.itemId|htmlentities}" readonly>
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="c-quantity" class="control-label col-xs-12 col-sm-2">{:__('Quantity')}:</label>
+        <div class="col-xs-12 col-sm-4">
+            <input id="c-quantity" class="form-control" name="row[quantity]" type="number" value="{$row.quantity|htmlentities}" readonly>
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="c-pointsSpent" class="control-label col-xs-12 col-sm-2">{:__('Points spent')}:</label>
+        <div class="col-xs-12 col-sm-4">
+            <input id="c-pointsSpent" class="form-control" name="row[pointsSpent]" type="number" value="{$row.pointsSpent|htmlentities}" readonly>
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Kind')}:</label>
+        <div class="col-xs-12 col-sm-4">
+            <input class="form-control" type="text" value="{:($row.kind=='physical' ? __('Physical') : __('Virtual'))}" readonly>
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="c-status" class="control-label col-xs-12 col-sm-2">{:__('Status')}:</label>
+        <div class="col-xs-12 col-sm-4">
+            <select id="c-status" class="form-control" name="row[status]">
+                <option value="pending_shipment" {eq name="row.status" value="pending_shipment"}selected{/eq}>{:__('Pending shipment')}</option>
+                <option value="shipped" {eq name="row.status" value="shipped"}selected{/eq}>{:__('Shipped')}</option>
+                <option value="received" {eq name="row.status" value="received"}selected{/eq}>{:__('Received')}</option>
+                <option value="completed" {eq name="row.status" value="completed"}selected{/eq}>{:__('Completed')}</option>
+            </select>
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="c-addressSnapshot" class="control-label col-xs-12 col-sm-2">{:__('Address snapshot')}:</label>
+        <div class="col-xs-12 col-sm-6">
+            <textarea id="c-addressSnapshot" class="form-control" name="row[addressSnapshot]" rows="3">{$row.addressSnapshot|htmlentities}</textarea>
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="c-code" class="control-label col-xs-12 col-sm-2">{:__('Code')}:</label>
+        <div class="col-xs-12 col-sm-6">
+            <input id="c-code" class="form-control" name="row[code]" type="text" value="{$row.code|htmlentities}">
+        </div>
+    </div>
+    <div class="form-group layer-footer">
+        <label class="control-label col-xs-12 col-sm-2"></label>
+        <div class="col-xs-12 col-sm-8">
+            <button type="submit" class="btn btn-primary btn-embossed disabled">{:__('OK')}</button>
+            <button type="reset" class="btn btn-default btn-embossed">{:__('Reset')}</button>
+        </div>
+    </div>
+</form>
+

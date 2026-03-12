@@ -7,6 +7,12 @@
         </div>
     </div>
     <div class="form-group">
+        <label for="c-sales_name" class="control-label col-xs-12 col-sm-2">{:__('Sales name')}:</label>
+        <div class="col-xs-12 col-sm-4">
+            <input id="c-sales_name" class="form-control" name="row[sales_name]" type="text" value="">
+        </div>
+    </div>
+    <div class="form-group">
         <label for="c-product_name" class="control-label col-xs-12 col-sm-2">{:__('Product name')}:</label>
         <div class="col-xs-12 col-sm-4">
             <input id="c-product_name" data-rule="required" class="form-control" name="row[product_name]" type="text" value="">
@@ -46,6 +52,24 @@
         <label for="c-customer_info" class="control-label col-xs-12 col-sm-2">{:__('Customer info')}:</label>
         <div class="col-xs-12 col-sm-8">
             <textarea id="c-customer_info" readonly class="form-control" rows="2"></textarea>
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Contract status')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            {:build_radios('row[contract_status]', ['none'=>__('Contract none'), 'uploaded'=>__('Contract uploaded')], 'none')}
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="c-contract_url" class="control-label col-xs-12 col-sm-2">{:__('Contract url')}:</label>
+        <div class="col-xs-12 col-sm-8">
+            <div class="input-group">
+                <input id="c-contract_url" class="form-control" name="row[contract_url]" type="text" value="">
+                <div class="input-group-addon no-border no-padding">
+                    <span class="btn btn-danger plupload" data-input-id="c-contract_url" data-mimetype="application/pdf" data-multiple="false"><i class="fa fa-upload"></i> {:__('Upload')}</span>
+                </div>
+            </div>
+            <span class="help-block">仅支持 PDF，上传后销售可在小程序中查看和下载电子合同</span>
         </div>
     </div>
     <div class="form-group">

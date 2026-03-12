@@ -35,6 +35,20 @@
       "needLogin": true
     },
     {
+      "path": "pages/sales/address-select/index",
+      "style": {
+        "navigationBarTitleText": "选择收货地址"
+      },
+      "needLogin": true
+    },
+    {
+      "path": "pages/sales/address-edit/index",
+      "style": {
+        "navigationBarTitleText": "添加收货地址"
+      },
+      "needLogin": true
+    },
+    {
       "path": "pages/sales/personal/index",
       "style": {
         "navigationBarTitleText": "个人中心"
@@ -101,6 +115,27 @@
       "style": {
         "navigationBarTitleText": "订单详情"
       }
+    },
+    {
+      "path": "pages/sales/exchange-confirm/index",
+      "style": {
+        "navigationBarTitleText": "确认兑换"
+      },
+      "needLogin": true
+    },
+    {
+      "path": "pages/sales/exchange-records/index",
+      "style": {
+        "navigationBarTitleText": "兑换记录"
+      },
+      "needLogin": true
+    },
+    {
+      "path": "pages/sales/exchange-records/detail",
+      "style": {
+        "navigationBarTitleText": "兑换详情"
+      },
+      "needLogin": true
     }
   ],
   "subPackages": [

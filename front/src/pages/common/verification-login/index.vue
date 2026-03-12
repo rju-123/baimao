@@ -86,14 +86,24 @@ async function submit() {
   }
   const userStore = useUserStore();
   try {
-    await userStore.login({ phone: tel.value, code: code.value });
+    const res: any = await userStore.login({ phone: tel.value, code: code.value });
     toast('登录成功', 'success');
     setTimeout(() => {
-      // 登录成功后统一进入角色选择页
-      route({
-        type: 'redirectTo',
-        url: '/pages/common/role-selection/index',
-      });
+      // 如果该手机号已存在账号且已选择过公司，则直接进入下单页
+      const hasCompany = !!(res?.user?.companyId || userStore.companyId);
+      if (hasCompany) {
+        route({
+          type: 'switchTab',
+          url: HOME_PATH,
+        });
+      }
+      else {
+        // 否则仍按原流程进入身份选择页，再引导选择公司
+        route({
+          type: 'redirectTo',
+          url: '/pages/common/role-selection/index',
+        });
+      }
     }, 500);
   }
   catch (err: any) {

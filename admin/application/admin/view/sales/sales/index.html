@@ -19,6 +19,9 @@
 </div>
 
 <script type="text/javascript">
+    // 将公司列表注入到前端，方便根据 company_id 映射公司名称
+    window.companyMap = {:json_encode(collection($companyList)->column('name', 'id'))};
+
     require.config({
         paths: {
             'backend/sales/sales': '/assets/js/backend/sales/sales'

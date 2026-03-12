@@ -3,6 +3,18 @@
     <view class="theme-text-content mb-20rpx text-32rpx font-medium">
       请选择公司
     </view>
+
+    <!-- 销售人员姓名 -->
+    <view class="mb-24rpx">
+      <view class="mb-12rpx text-26rpx theme-text-label">
+        姓名
+      </view>
+      <nut-input
+        v-model="salesName"
+        placeholder="请输入您的姓名"
+        class="rounded-2xl px-20rpx bg-white"
+      />
+    </view>
     <nut-cellgroup>
       <nut-cell
         v-for="item in companies"
@@ -39,6 +51,7 @@ import { toast, route } from '@/utils/uni-helpers';
 const companies = ref<CompanyApi.Company[]>([]);
 const loading = ref(false);
 const userStore = useUserStore();
+const salesName = ref(userStore.user_name || '');
 
 async function fetchCompanies() {
   loading.value = true;
@@ -81,12 +94,17 @@ async function fetchCompanies() {
 }
 
 async function selectCompany(item: CompanyApi.Company) {
+  if (!salesName.value || !salesName.value.trim()) {
+    toast('请输入姓名');
+    return;
+  }
+
   const userId = Number(userStore.user_id);
 
   // 如果存在真实登录态，则尝试同步到后端
   if (userId) {
     try {
-      await UserApi.updateCompany(userId, item.id);
+      await UserApi.updateCompany(userId, item.id, salesName.value.trim());
     }
     catch {
       // 后端不可用时，不阻塞前端体验，仅提示一次
@@ -98,6 +116,7 @@ async function selectCompany(item: CompanyApi.Company) {
   userStore.setInfo({
     // 若还没有用户ID，给一个演示用的本地ID，避免后续逻辑取值为空
     user_id: userStore.user_id || '1',
+    user_name: salesName.value.trim(),
     companyId: item.id,
     companyName: item.name,
   });

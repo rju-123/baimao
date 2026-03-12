@@ -24,6 +24,21 @@
             </select>
         </div>
     </div>
+    <div class="form-group">
+        <label for="c-ongoing_orders" class="control-label col-xs-12 col-sm-2">{:__('Ongoing orders')}:</label>
+        <div class="col-xs-12 col-sm-4">
+            <input id="c-ongoing_orders" data-rule="integer" class="form-control" name="row[ongoing_orders]" type="number" value="{$row.ongoing_orders|default='0'|htmlentities}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">{:__('Is admin')}:</label>
+        <div class="col-xs-12 col-sm-4">
+            <div class="radio">
+                <label for="c-is_admin-1"><input id="c-is_admin-1" name="row[is_admin]" type="radio" value="1" {eq name="row.is_admin" value="1"}checked{/eq} /> {:__('Yes')}</label>
+                <label for="c-is_admin-0" style="margin-left: 15px;"><input id="c-is_admin-0" name="row[is_admin]" type="radio" value="0" {neq name="row.is_admin" value="1"}checked{/neq} /> {:__('No')}</label>
+            </div>
+        </div>
+    </div>
     <div class="form-group layer-footer">
         <label class="control-label col-xs-12 col-sm-2"></label>
         <div class="col-xs-12 col-sm-8">

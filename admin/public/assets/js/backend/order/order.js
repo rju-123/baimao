@@ -26,11 +26,18 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                         {checkbox: true},
                         {field: 'id', title: __('Id'), sortable: true},
                         {field: 'order_no', title: __('Order no'), operate: 'LIKE'},
+                        {field: 'sales_name', title: __('Sales name'), operate: 'LIKE'},
                         {field: 'product_name', title: __('Product name'), operate: 'LIKE'},
                         {field: 'product_customer', title: __('Product customer'), operate: 'LIKE'},
                         {field: 'quantity', title: __('Quantity')},
                         {field: 'pay_amount', title: __('Pay amount'), operate: 'BETWEEN'},
                         {field: 'whitehat_name', title: __('Whitehat name'), operate: 'LIKE'},
+                        {
+                            field: 'contract_status',
+                            title: __('Contract status'),
+                            searchList: {none: __('Contract none'), uploaded: __('Contract uploaded')},
+                            formatter: Table.api.formatter.status
+                        },
                         {
                             field: 'status',
                             title: __('Status'),

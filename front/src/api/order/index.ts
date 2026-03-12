@@ -21,6 +21,10 @@ export interface Order {
   whitehatName?: string;
   /** 接单员电话（白帽子手机号快照） */
   whitehatPhone?: string;
+  /** 电子合同状态 */
+  contractStatus?: string;
+  /** 电子合同 PDF 地址 */
+  contractUrl?: string;
   quantity: number;
   amount: number;
   discountAmount: number;

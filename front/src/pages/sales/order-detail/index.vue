@@ -71,13 +71,16 @@
       <view class="section-title">
         电子合同
       </view>
-      <view class="contract-actions">
-        <button class="contract-btn secondary">
+      <view v-if="order.contractUrl" class="contract-actions">
+        <button class="contract-btn secondary" @tap="viewContract">
           查看
         </button>
-        <button class="contract-btn primary">
+        <button class="contract-btn primary" @tap="downloadContract">
           下载
         </button>
+      </view>
+      <view v-else class="contract-empty">
+        <text class="contract-empty-text">暂未上传电子合同</text>
       </view>
     </view>
   </view>
@@ -145,6 +148,62 @@ async function fetchData(id: number) {
   catch {
     toast('加载订单详情失败');
   }
+}
+
+function ensureAbsoluteUrl(url: string): string {
+  if (!url)
+    return url;
+  if (url.startsWith('http://') || url.startsWith('https://'))
+    return url;
+  // 相对路径时，拼接后台域名，需与实际部署保持一致
+  const base = 'http://127.0.0.1:8000';
+  return `${base}${url.startsWith('/') ? '' : '/'}${url}`;
+}
+
+async function viewContract() {
+  if (!order.value?.contractUrl) {
+    toast('暂未上传电子合同');
+    return;
+  }
+  const url = ensureAbsoluteUrl(order.value.contractUrl);
+  uni.downloadFile({
+    url,
+    success(res) {
+      if (!res.tempFilePath) {
+        toast('下载电子合同失败');
+        return;
+      }
+      uni.openDocument({
+        filePath: res.tempFilePath,
+        fileType: 'pdf',
+        showMenu: true,
+        success() {},
+        fail() {
+          toast('打开电子合同失败');
+        },
+      });
+    },
+    fail() {
+      toast('下载电子合同失败');
+    },
+  });
+}
+
+async function downloadContract() {
+  if (!order.value?.contractUrl) {
+    toast('暂未上传电子合同');
+    return;
+  }
+  const url = ensureAbsoluteUrl(order.value.contractUrl);
+  uni.downloadFile({
+    url,
+    success() {
+      toast('电子合同已开始下载，请在微信中查看文件');
+    },
+    fail() {
+      toast('下载电子合同失败');
+    },
+  });
 }
 
 onLoad((options: any) => {
@@ -258,6 +317,35 @@ onLoad((options: any) => {
 .info-value {
   @apply text-26rpx;
   color: #1b233b;
+}
+
+.contract-actions {
+  @apply mt-12rpx flex;
+}
+
+.contract-btn {
+  @apply flex-1 text-26rpx py-12rpx rounded-9999 border-0;
+}
+
+.contract-btn.secondary {
+  margin-right: 16rpx;
+  background: #ffffff;
+  color: #0A7AFF;
+  border: 1rpx solid #0A7AFF;
+}
+
+.contract-btn.primary {
+  background: #0A7AFF;
+  color: #ffffff;
+}
+
+.contract-empty {
+  @apply mt-8rpx;
+}
+
+.contract-empty-text {
+  @apply text-26rpx;
+  color: $u-tips-color;
 }
 
 .contract-actions {

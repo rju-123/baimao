@@ -14,8 +14,11 @@ class Sales extends Backend
 {
     protected $model = null;
 
-    /** 快速搜索：手机号、姓名 */
-    protected $searchFields = 'phone,name';
+    // 开启关联搜索，方便在列表中使用 company.name 字段
+    protected $relationSearch = true;
+
+    /** 快速搜索：姓名、电话 */
+    protected $searchFields = 'name,phone';
 
     public function _initialize()
     {

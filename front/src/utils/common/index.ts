@@ -2,8 +2,7 @@
 export function mpUpdate() {
   const updateManager = uni.getUpdateManager();
   updateManager.onCheckForUpdate((res) => {
-    // 请求完新版本信息的回调
-    console.log(res.hasUpdate);
+    // 请求完新版本信息的回调（这里无需额外日志）
   });
   updateManager.onUpdateReady(() => {
     uni.showModal({

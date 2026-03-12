@@ -104,7 +104,7 @@ function formatPrice(val: number | string | null | undefined): string {
 async function fetchProducts() {
   loading.value = true;
   try {
-    const list = await ProductApi.listProducts({ status: 'active' });
+    const list = await ProductApi.listProducts();
     products.value = Array.isArray(list) ? list : [];
   }
   catch {

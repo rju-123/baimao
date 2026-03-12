@@ -17,6 +17,8 @@ CREATE TABLE IF NOT EXISTS `fa_sales` (
   `phone` varchar(20) NOT NULL COMMENT '手机号（唯一，与小程序用户对应）',
   `name` varchar(64) NOT NULL DEFAULT '' COMMENT '姓名',
   `company_id` int(10) unsigned DEFAULT NULL COMMENT '所属公司ID',
+  `ongoing_orders` int(10) unsigned NOT NULL DEFAULT 0 COMMENT '进行中订单数',
+  `is_admin` tinyint(1) unsigned NOT NULL DEFAULT 0 COMMENT '是否管理员 1=管理员 0=普通',
   `createtime` int(10) unsigned DEFAULT NULL COMMENT '创建时间',
   `updatetime` int(10) unsigned DEFAULT NULL COMMENT '更新时间',
   PRIMARY KEY (`id`),

@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ProductsService } from '../products/products.service';
+import { UsersService } from '../users/users.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { Order } from './order.entity';
 
@@ -12,12 +13,14 @@ export class OrdersService {
     @InjectRepository(Order, 'mysql')
     private readonly ordersRepo: Repository<Order>,
     private readonly productsService: ProductsService,
+    private readonly usersService: UsersService,
   ) {}
 
   async create(dto: CreateOrderDto) {
     const product = await this.productsService.findById(dto.productId);
     if (!product)
       throw new Error('产品不存在');
+    const user = await this.usersService.findById(dto.userId);
 
     // 当前阶段：前端已限制购买数量且售罄产品不会出现在下单列表，
     // 因此这里不再因为库存不足而直接阻止下单，避免边界情况下订单无法生成。
@@ -32,6 +35,8 @@ export class OrdersService {
     const entity = this.ordersRepo.create({
       orderNo,
       userId: dto.userId,
+      salesName: user?.name ?? '',
+      salesPhone: user?.phone ?? '',
       companyId: dto.companyId ?? null,
       productId: dto.productId,
       productName: product.name,
