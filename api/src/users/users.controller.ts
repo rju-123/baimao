@@ -5,10 +5,16 @@ import { UsersService } from './users.service';
 import { LoginDto } from './dto/login.dto';
 import { UpdateCompanyDto } from './dto/update-company.dto';
 import { SendCodeDto } from './dto/send-code.dto';
+import { SalesService } from '../sales/sales.service';
+import { CompaniesService } from '../companies/companies.service';
 
 @Controller()
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly salesService: SalesService,
+    private readonly companiesService: CompaniesService,
+  ) {}
 
   /**
    * 发送登录验证码（模拟接口，不真正下发短信）
@@ -59,10 +65,33 @@ export class UsersController {
   @Get('users/:id')
   async getUser(@Param('id') id: string) {
     const user = await this.usersService.findById(Number(id));
+    if (!user) {
+      return {
+        code: 404,
+        message: 'User not found',
+        result: null,
+      };
+    }
+
+    // 从销售表同步管理员身份（以 FastAdmin 的 fa_sales.is_admin 为准）
+    const sales = await this.salesService.findByPhone(user.phone);
+    const isAdmin = sales ? !!sales.isAdmin : user.isAdmin;
+
+    // 计算公司名称（如果有 companyId）
+    let companyName: string | null = null;
+    if (user.companyId) {
+      const company = await this.companiesService.findOne(user.companyId);
+      companyName = company ? company.name : null;
+    }
+
     return {
       code: 200,
       message: 'OK',
-      result: user,
+      result: {
+        ...user,
+        isAdmin,
+        companyName,
+      },
     };
   }
 

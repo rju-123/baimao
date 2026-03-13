@@ -12,8 +12,18 @@ export class UsersService {
     private readonly salesService: SalesService,
   ) {}
 
-  findById(id: number) {
-    return this.usersRepo.findOne({ where: { id } });
+  async findById(id: number) {
+    const user = await this.usersRepo.findOne({ where: { id } });
+    if (!user)
+      return null;
+    // 同步管理员身份和所属公司：以 FastAdmin 销售表为准
+    const sales = await this.salesService.findByPhone(user.phone);
+    if (sales) {
+      user.isAdmin = !!sales.isAdmin;
+      // 如果销售记录中的公司为空，则认为该用户需要重新选择公司
+      user.companyId = sales.companyId ?? null;
+    }
+    return user;
   }
 
   findByPhone(phone: string) {
@@ -33,6 +43,11 @@ export class UsersService {
       await this.usersRepo.save(user);
     }
     await this.salesService.upsertByPhone(phone, user.name, user.companyId);
+    // 同步管理员身份：从 fa_sales 表中读取 is_admin
+    const sales = await this.salesService.findByPhone(phone);
+    if (sales) {
+      user.isAdmin = !!sales.isAdmin;
+    }
     return user;
   }
 

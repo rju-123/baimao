@@ -43,6 +43,7 @@ const useUserStore = defineStore('user', {
           user_name: user.name || user.phone,
           phone: user.phone,
           companyId: user.companyId ?? undefined,
+          isAdmin: (user as any).isAdmin ?? false,
           points: user.points ?? 0,
         });
       }
@@ -64,6 +65,7 @@ const useUserStore = defineStore('user', {
             user_name: res.user.name || res.user.phone,
             phone: res.user.phone,
             companyId: res.user.companyId,
+            isAdmin: res.user.isAdmin,
             // 积分余额（若后端暂未返回则回退为 0）
             points: (res.user as any).points ?? 0,
             token,

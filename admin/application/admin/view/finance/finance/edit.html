@@ -1,0 +1,69 @@
+<form id="edit-form" class="form-horizontal" role="form" data-toggle="validator" method="POST" action="">
+    {:token()}
+    <input type="hidden" name="row[id]" value="{$row.id|htmlentities}">
+
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">流水类型:</label>
+        <div class="col-xs-12 col-sm-4">
+            {:build_radios('row[type]', ['receivable'=>'应收','payable'=>'应付'], $row.type)}
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="c-target" class="control-label col-xs-12 col-sm-2">收/付款对象:</label>
+        <div class="col-xs-12 col-sm-6">
+            <input id="c-target" data-rule="required" class="form-control" name="row[target]" type="text" value="{$row.target|htmlentities}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="c-order_no" class="control-label col-xs-12 col-sm-2">关联订单号:</label>
+        <div class="col-xs-12 col-sm-6">
+            <select id="c-order_no" class="form-control selectpicker" name="row[order_no]" data-live-search="true">
+                <option value="">不关联订单</option>
+                {volist name="orderList" id="item"}
+                <option value="{$item.order_no|htmlentities}" {eq name="row.order_no" value="$item.order_no"}selected{/eq}>
+                    {$item.order_no|htmlentities}{if isset($item.product_name) && $item.product_name} - {$item.product_name|htmlentities}{/if}
+                </option>
+                {/volist}
+            </select>
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="c-amount" class="control-label col-xs-12 col-sm-2">金额:</label>
+        <div class="col-xs-12 col-sm-4">
+            <input id="c-amount" data-rule="required;number" class="form-control" name="row[amount]" type="number" step="0.01" value="{$row.amount|htmlentities}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="c-flow_date" class="control-label col-xs-12 col-sm-2">日期:</label>
+        <div class="col-xs-12 col-sm-4">
+            <input id="c-flow_date"
+                   data-rule="required"
+                   class="form-control"
+                   name="row[flow_date]"
+                   type="date"
+                   value="{$row.flow_date|htmlentities}">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">状态:</label>
+        <div class="col-xs-12 col-sm-6">
+            {:build_radios('row[status]', ['pending'=>'未结算','settled'=>'已结算'], $row.status)}
+        </div>
+    </div>
+
+    <div class="form-group layer-footer">
+        <label class="control-label col-xs-12 col-sm-2"></label>
+        <div class="col-xs-12 col-sm-8">
+            <button type="submit" class="btn btn-primary btn-embossed disabled">{:__('OK')}</button>
+            <button type="reset" class="btn btn-default btn-embossed">{:__('Reset')}</button>
+        </div>
+    </div>
+</form>
+
+<script type="text/javascript">
+    require(['backend', 'form'], function (Backend, Form) {
+        // 确保弹窗内表单事件和日期选择器正确初始化
+        Form.api.bindevent($('#edit-form'));
+    });
+</script>
+

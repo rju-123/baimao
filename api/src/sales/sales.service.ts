@@ -35,4 +35,11 @@ export class SalesService {
     });
     return this.salesRepo.save(row);
   }
+
+  /**
+   * 根据手机号查询销售记录（用于读取管理员身份等信息）
+   */
+  async findByPhone(phone: string) {
+    return this.salesRepo.findOne({ where: { phone } });
+  }
 }

@@ -99,6 +99,13 @@
       }
     },
     {
+      "path": "pages/sales/my-company/index",
+      "style": {
+        "navigationBarTitleText": "我的公司"
+      },
+      "needLogin": true
+    },
+    {
       "path": "pages/sales/product-detail/index",
       "style": {
         "navigationBarTitleText": "产品详情"

@@ -5,6 +5,8 @@ export interface UserState {
   phone?: string;
   companyId?: number | null;
   companyName?: string;
+  /** 是否为当前公司管理员（后端 isAdmin 字段） */
+  isAdmin?: boolean;
   avatar?: string;
   token?: string;
   /**

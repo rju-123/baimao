@@ -4,7 +4,7 @@ return array (
   'name' => '白帽子后台管理系统',
   'beian' => '',
   'cdnurl' => '',
-  'version' => '1.0.16',
+  'version' => '1.0.24',
   'timezone' => 'Asia/Shanghai',
   'forbiddenip' => '',
   'languages' => 
