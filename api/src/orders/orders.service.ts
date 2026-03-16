@@ -30,6 +30,9 @@ export class OrdersService {
     const discountAmount = dto.couponDiscount ?? 0;
     const payAmount = amount - discountAmount;
 
+    // 订单所属公司：优先使用传入的 companyId，否则回退为当前用户的 companyId
+    const companyId = dto.companyId ?? user?.companyId ?? null;
+
     const orderNo = await this.generateOrderNo();
 
     const entity = this.ordersRepo.create({
@@ -37,7 +40,7 @@ export class OrdersService {
       userId: dto.userId,
       salesName: user?.name ?? '',
       salesPhone: user?.phone ?? '',
-      companyId: dto.companyId ?? null,
+      companyId,
       productId: dto.productId,
       productName: product.name,
       productBrief: product.brief,
@@ -75,9 +78,19 @@ export class OrdersService {
   }
 
   async findAllByUser(userId: number, status?: string) {
-    const where: any = { userId };
+    // 先根据 userId 获取当前用户的最新公司信息
+    const user = await this.usersService.findById(userId);
+    // 没有用户或尚未选择公司时，不返回任何订单，引导其先选择公司
+    if (!user || !user.companyId)
+      return [];
+
+    const where: any = {
+      userId,
+      companyId: user.companyId,
+    };
     if (status)
       where.status = status;
+
     return this.ordersRepo.find({
       where,
       // MySQL 中使用 int 类型的 createtime 记录下单时间，这里按 createtime 倒序

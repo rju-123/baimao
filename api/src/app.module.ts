@@ -18,10 +18,12 @@ import { Coupon } from './coupons/coupon.entity';
 import { PointsMallItem } from './points/points-mall-item.entity';
 import { ExchangeRecord } from './points/exchange-record.entity';
 import { PointsCode } from './points/points-code.entity';
+import { KnowledgeArticle } from './knowledge/knowledge.entity';
 import { PartnerInvoice } from './partner/partner-invoice.entity';
 import { PartnerModule } from './partner/partner.module';
 import { Sales } from './sales/sales.entity';
 import { SalesModule } from './sales/sales.module';
+import { KnowledgeModule } from './knowledge/knowledge.module';
 
 @Module({
   imports: [
@@ -41,7 +43,7 @@ import { SalesModule } from './sales/sales.module';
       username: 'root',
       password: 'admin123',
       database: 'baimao_admin',
-      entities: [Product, Order, Company, Sales, PointsMallItem, ExchangeRecord, PointsCode],
+      entities: [Product, Order, Company, Sales, PointsMallItem, ExchangeRecord, PointsCode, KnowledgeArticle],
       synchronize: false,
     }),
     UsersModule,
@@ -53,6 +55,7 @@ import { SalesModule } from './sales/sales.module';
     PointsModule,
     PartnerModule,
     SalesModule,
+    KnowledgeModule,
   ],
   controllers: [AppController],
   providers: [AppService],

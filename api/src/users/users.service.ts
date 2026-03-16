@@ -16,12 +16,10 @@ export class UsersService {
     const user = await this.usersRepo.findOne({ where: { id } });
     if (!user)
       return null;
-    // 同步管理员身份和所属公司：以 FastAdmin 销售表为准
+    // 同步管理员身份：以 FastAdmin 销售表为准；公司归属以用户表为“当前公司”为准
     const sales = await this.salesService.findByPhone(user.phone);
     if (sales) {
       user.isAdmin = !!sales.isAdmin;
-      // 如果销售记录中的公司为空，则认为该用户需要重新选择公司
-      user.companyId = sales.companyId ?? null;
     }
     return user;
   }
@@ -31,23 +29,30 @@ export class UsersService {
   }
 
   async createIfNotExists(phone: string): Promise<User> {
+    // 登录场景下，优先以销售表（FastAdmin）的公司与管理员信息为准，避免覆盖后台调整
+    const sales = await this.salesService.findByPhone(phone);
+
     let user = await this.findByPhone(phone);
     if (!user) {
       user = this.usersRepo.create({
         phone,
         role: 'sales',
-        isAdmin: false,
-        companyId: null,
+        // 新建用户时：如果销售记录已存在，则同步其公司与管理员身份
+        isAdmin: sales ? !!sales.isAdmin : false,
+        companyId: sales ? sales.companyId ?? null : null,
         points: 0,
       });
       await this.usersRepo.save(user);
     }
-    await this.salesService.upsertByPhone(phone, user.name, user.companyId);
-    // 同步管理员身份：从 fa_sales 表中读取 is_admin
-    const sales = await this.salesService.findByPhone(phone);
-    if (sales) {
+    else if (sales) {
+      // 用户已存在：仅同步管理员身份，保留用户当前 companyId（由前端选择公司或后台逻辑维护）
       user.isAdmin = !!sales.isAdmin;
+      await this.usersRepo.save(user);
     }
+
+    // 登录流程中不再反向覆盖 FastAdmin 的销售表，只读不写。
+    // 管理员在后台调整公司 / 管理员身份后，将通过上面的逻辑同步到用户表与返回结果。
+
     return user;
   }
 

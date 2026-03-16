@@ -1,0 +1,67 @@
+<form id="add-form" class="form-horizontal" role="form" data-toggle="validator" method="POST" action="">
+    {:token()}
+    <div class="form-group">
+        <label for="c-title" class="control-label col-xs-12 col-sm-2">标题:</label>
+        <div class="col-xs-12 col-sm-6">
+            <input id="c-title" data-rule="required" class="form-control" name="row[title]" type="text" value="">
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="c-summary" class="control-label col-xs-12 col-sm-2">摘要:</label>
+        <div class="col-xs-12 col-sm-6">
+            <textarea id="c-summary" data-rule="required" class="form-control" name="row[summary]" rows="3"></textarea>
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="c-content" class="control-label col-xs-12 col-sm-2">内容:</label>
+        <div class="col-xs-12 col-sm-8">
+            <textarea id="c-content" data-rule="required" class="form-control editor" name="row[content]" rows="10"></textarea>
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">状态:</label>
+        <div class="col-xs-12 col-sm-4">
+            {:build_radios('row[status]', ['draft'=>'草稿', 'published'=>'上架'], 'draft')}
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="c-attachment_url" class="control-label col-xs-12 col-sm-2">附件:</label>
+        <div class="col-xs-12 col-sm-6">
+            <div class="input-group">
+                <input id="c-attachment_url" class="form-control" name="row[attachment_url]" type="text" value="" placeholder="支持上传多个附件，逗号分隔">
+                <div class="input-group-addon no-border no-padding">
+                    <span class="btn btn-danger plupload"
+                          data-input-id="c-attachment_url"
+                          data-mimetype="application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,image/gif,image/jpeg,image/png,image/jpg"
+                          data-multiple="true"
+                          data-maxcount="5">
+                        <i class="fa fa-upload"></i> {:__('Upload')}
+                    </span>
+                </div>
+                <span class="msg-box n-right" for="c-attachment_url"></span>
+            </div>
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="c-attachment_name" class="control-label col-xs-12 col-sm-2">附件名称:</label>
+        <div class="col-xs-12 col-sm-6">
+            <input id="c-attachment_name" class="form-control" name="row[attachment_name]" type="text" value="">
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">附件位置:</label>
+        <div class="col-xs-12 col-sm-6">
+            {:build_radios('row[attachment_position]', ['head'=>'文章开头', 'tail'=>'文章结尾'], 'tail')}
+        </div>
+    </div>
+    <div class="form-group layer-footer">
+        <label class="control-label col-xs-12 col-sm-2"></label>
+        <div class="col-xs-12 col-sm-8">
+            <button type="submit" class="btn btn-primary btn-embossed disabled">{:__('OK')}</button>
+            <button type="reset" class="btn btn-default btn-embossed">{:__('Reset')}</button>
+        </div>
+    </div>
+</form>
+
+<!-- 富文本逻辑统一放到 backend/knowledge/article.js 中处理 -->
+

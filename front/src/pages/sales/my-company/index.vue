@@ -77,6 +77,12 @@
               >
                 管理员
               </text>
+              <text
+                v-if="member.removed"
+                class="member-removed-tag"
+              >
+                已移除
+              </text>
             </view>
             <view class="member-meta">
               <text class="member-phone">
@@ -89,9 +95,9 @@
           </view>
         </view>
 
-        <!-- 管理操作：仅在管理模式且对非自己成员展示 -->
+        <!-- 管理操作：仅在管理模式且对非自己、且未被移除的成员展示 -->
         <view
-          v-if="isManaging && member.id !== currentUserId"
+          v-if="isManaging && member.id !== currentUserId && !member.removed"
           class="member-actions"
         >
           <button
@@ -140,6 +146,8 @@ interface MemberItem {
   phone?: string;
   isAdmin?: boolean;
   totalOrders?: number;
+  /** 是否为历史成员（当前已不属于该公司） */
+  removed?: boolean;
 }
 
 const members = ref<MemberItem[]>([]);
@@ -248,6 +256,7 @@ const loadData = async () => {
       phone: m.phone,
       isAdmin: m.isAdmin,
       totalOrders: m.totalOrders,
+      removed: (m as any).removed === true,
     }));
   }
   finally {
@@ -474,6 +483,15 @@ const confirmTransfer = (member: MemberItem) => {
   font-size: 20rpx;
   background-color: #0a7aff;
   color: #ffffff;
+}
+
+.member-removed-tag {
+  margin-left: 8rpx;
+  padding: 2rpx 10rpx;
+  border-radius: 9999rpx;
+  font-size: 20rpx;
+  background-color: #f3f4f6;
+  color: #9ca3af;
 }
 
 .member-meta {

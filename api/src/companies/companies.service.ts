@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { Company } from './company.entity';
 import { Sales } from '../sales/sales.entity';
 import { Order } from '../orders/order.entity';
@@ -61,36 +61,73 @@ export class CompaniesService {
   }
 
   async getMembers(companyId: number) {
-    const rows = await this.salesRepo.find({ where: { companyId } });
-    if (rows.length === 0)
-      return [];
-
-    const phones = rows.map(row => row.phone);
+    // 1. 先基于订单表统计：所有在该公司下产生过订单的销售手机号及其订单数
     const rawCounts = await this.ordersRepo.createQueryBuilder('o')
-      // 注意：这里直接使用底层列名 sales_phone，避免 ONLY_FULL_GROUP_BY 问题
       .select('o.sales_phone', 'phone')
       .addSelect('COUNT(*)', 'totalOrders')
-      .where('o.sales_phone IN (:...phones)', { phones })
+      .where('o.company_id = :companyId', { companyId })
       .groupBy('o.sales_phone')
       .getRawMany();
 
+    if (rawCounts.length === 0)
+      return [];
+
+    const phones = rawCounts.map((r: any) => r.phone as string);
     const countMap = new Map<string, number>();
     rawCounts.forEach((r: any) => {
       countMap.set(r.phone, Number(r.totalOrders) || 0);
     });
 
-    return rows.map(row => ({
-      id: row.id,
-      name: row.name,
-      phone: row.phone,
-      isAdmin: !!(row as any).isAdmin,
-      createtime: row.createtime,
-      totalOrders: countMap.get(row.phone) ?? 0,
-    }));
+    // 2. 拉取这些手机号在销售表中的所有记录（可能在不同公司）
+    const salesRows = await this.salesRepo.find({
+      where: { phone: In(phones) },
+    });
+    const salesByPhone = new Map<string, Sales[]>();
+    salesRows.forEach(row => {
+      const list = salesByPhone.get(row.phone) ?? [];
+      list.push(row);
+      salesByPhone.set(row.phone, list);
+    });
+
+    // 3. 读取用户表中这些手机号当前所属公司，用于判断是否为“已移除”成员
+    const users = await this.usersRepo.find({
+      where: { phone: In(phones) },
+    });
+    const userCompanyMap = new Map<string, number | null>();
+    users.forEach((u: User) => {
+      userCompanyMap.set(u.phone, u.companyId ?? null);
+    });
+
+    // 4. 组装成员列表：
+    // - 如果在销售表中存在当前 companyId 下的记录 => 视为在职成员
+    // - 否则，从其它公司记录或仅订单记录中构造一条历史成员，标记为 removed=true
+    const members = phones.map((phone) => {
+      const salesList = salesByPhone.get(phone) ?? [];
+      const activeRow = salesList.find(row => row.companyId === companyId) ?? null;
+      const anyRow = activeRow ?? salesList[0] ?? null;
+
+      const currentCompanyId = userCompanyMap.get(phone) ?? null;
+      const removed = currentCompanyId !== companyId;
+      const totalOrders = countMap.get(phone) ?? 0;
+
+      return {
+        id: anyRow ? anyRow.id : 0,
+        name: anyRow ? anyRow.name : '',
+        phone,
+        isAdmin: activeRow ? !!activeRow.isAdmin : false,
+        createtime: anyRow ? anyRow.createtime : null,
+        totalOrders,
+        removed,
+      };
+    });
+
+    return members;
   }
 
   /**
-   * 将某个销售从公司中移除：清空其 companyId 与管理员标记
+   * 将某个销售从公司中移除：
+   * - 在销售表中保留 companyId，仅清空管理员标记，用于“我的公司”历史展示
+   * - 在用户表中清空当前 companyId，强制其在小程序中重新选择公司
    */
   async removeMember(companyId: number, salesId: number) {
     // 先按 id + companyId 精确找到记录
@@ -100,14 +137,13 @@ export class CompaniesService {
     const now = Math.floor(Date.now() / 1000);
     const phone = row.phone;
 
-    // 以手机号为准，清空该手机号下所有销售记录的公司与管理员标记，保证一致性
-    await this.salesRepo.update({ phone }, {
-      companyId: null,
+    // 在销售表中仅清空管理员标记，保留 companyId 以便“我的公司”展示历史成员
+    await this.salesRepo.update({ phone, companyId }, {
       isAdmin: 0,
       updatetime: now,
     });
 
-    // 同步清空 users 表中对应用户的 companyId
+    // 同步清空 users 表中对应用户的当前 companyId，强制其重新选择公司
     if (phone) {
       const user = await this.usersRepo.findOne({ where: { phone } });
       if (user) {

@@ -143,6 +143,20 @@
         "navigationBarTitleText": "兑换详情"
       },
       "needLogin": true
+    },
+    {
+      "path": "pages/sales/knowledge/index",
+      "style": {
+        "navigationBarTitleText": "知识库"
+      },
+      "needLogin": true
+    },
+    {
+      "path": "pages/sales/knowledge/detail",
+      "style": {
+        "navigationBarTitleText": "文章详情"
+      },
+      "needLogin": true
     }
   ],
   "subPackages": [

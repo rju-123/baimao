@@ -26,6 +26,8 @@ export interface CompanyMember {
   isAdmin?: boolean;
   createtime?: number | null;
   totalOrders?: number;
+  /** 是否为历史成员（当前已不属于该公司） */
+  removed?: boolean;
 }
 
 export const getCompanyDashboard = (id: number) =>

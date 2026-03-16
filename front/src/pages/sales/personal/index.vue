@@ -249,9 +249,8 @@ const goMyCompany = () => {
 };
 
 const goKnowledge = () => {
-  uni.showToast({
-    title: '知识库模块开发中',
-    icon: 'none',
+  uni.navigateTo({
+    url: '/pages/sales/knowledge/index',
   });
 };
 

@@ -106,7 +106,6 @@ class Attachment extends Model
             'fullurl'  => cdnurl($this->url, true),
             'category' => $this->category,
             'filename' => $this->filename,
-            'filesize' => $this->filesize,
             'mimetype' => $this->mimetype,
         ];
         return $data;
