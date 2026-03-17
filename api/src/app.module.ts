@@ -24,6 +24,7 @@ import { PartnerModule } from './partner/partner.module';
 import { Sales } from './sales/sales.entity';
 import { SalesModule } from './sales/sales.module';
 import { KnowledgeModule } from './knowledge/knowledge.module';
+import { EsignModule } from './esign/esign.module';
 
 @Module({
   imports: [
@@ -56,6 +57,7 @@ import { KnowledgeModule } from './knowledge/knowledge.module';
     PartnerModule,
     SalesModule,
     KnowledgeModule,
+    EsignModule,
   ],
   controllers: [AppController],
   providers: [AppService],

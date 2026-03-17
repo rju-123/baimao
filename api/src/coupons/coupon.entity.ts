@@ -33,10 +33,22 @@ export class Coupon {
   validTo: Date;
 
   /**
-   * available / used / expired
+   * available / locked / used / expired
    */
   @Column({ default: 'available' })
   status: string;
+
+  /**
+   * 锁定信息：加入购物车时占用优惠券，避免被重复使用
+   */
+  @Column({ type: 'int', nullable: true })
+  lockedByUserId: number | null;
+
+  @Column({ type: 'int', nullable: true })
+  lockedForProductId: number | null;
+
+  @Column({ type: 'datetime', nullable: true })
+  lockedAt: Date | null;
 
   @CreateDateColumn()
   createdAt: Date;

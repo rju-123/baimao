@@ -38,25 +38,6 @@
       </view>
     </view>
 
-    <!-- 电子签名 -->
-    <view class="card upload-card" @tap="chooseContract">
-      <view class="section-title">
-        电子签名
-      </view>
-      <view v-if="contractImage" class="contract-preview">
-        <image :src="contractImage" mode="aspectFit" />
-      </view>
-      <view v-else class="contract-placeholder">
-        <view class="upload-icon">⬆</view>
-        <view class="upload-text">
-          点击上传电子签名
-        </view>
-        <view class="upload-subtext">
-          支持 JPG、PNG 格式
-        </view>
-      </view>
-    </view>
-
     <!-- 优惠券 -->
     <view class="card coupon-card">
       <view class="field-line coupon-header">
@@ -89,8 +70,8 @@
 
     <!-- 底部按钮 -->
     <view class="bottom-bar">
-      <button class="submit-btn" @tap="submitOrder">
-        立即购买
+      <button class="submit-btn" @tap="addToCart">
+        加入购物车
       </button>
     </view>
 
@@ -140,7 +121,8 @@
 
 <script setup lang="ts">
 import { onLoad } from '@dcloudio/uni-app';
-import { OrderApi, ProductApi } from '@/api';
+import { ProductApi } from '@/api';
+import { get, post } from '@/utils/request';
 import { toast } from '@/utils/uni-helpers';
 import useUserStore from '@/store/modules/user';
 
@@ -149,7 +131,7 @@ const userStore = useUserStore();
 const product = ref<ProductApi.Product | null>(null);
 const productId = ref<number | null>(null);
 const quantity = ref(1);
-const contractImage = ref<string>('');
+const CART_STORAGE_KEY = 'sales_cart_items';
 
 interface Coupon {
   id: number;
@@ -210,6 +192,20 @@ async function fetchProduct(id: number) {
   }
 }
 
+async function fetchCoupons() {
+  const userId = Number(userStore.user_id || 0);
+  if (!userId)
+    return;
+  try {
+    const list = await get<Coupon[]>(`/coupons?userId=${encodeURIComponent(String(userId))}&status=available`);
+    coupons.value = Array.isArray(list) ? list : [];
+  }
+  catch (e) {
+    console.warn('load coupons failed', e);
+    coupons.value = [];
+  }
+}
+
 function decrease() {
   if (quantity.value > 1)
     quantity.value -= 1;
@@ -258,19 +254,34 @@ const couponText = computed(() => {
   return '选择优惠券';
 });
 
-function chooseContract() {
-  uni.chooseImage({
-    count: 1,
-    sizeType: ['compressed'],
-    sourceType: ['album', 'camera'],
-    success(res) {
-      if (res.tempFilePaths && res.tempFilePaths.length > 0)
-        contractImage.value = res.tempFilePaths[0];
+function loadCart(): any[] {
+  try {
+    const raw = uni.getStorageSync(CART_STORAGE_KEY);
+    const arr = typeof raw === 'string' ? JSON.parse(raw) : raw;
+    return Array.isArray(arr) ? arr : [];
+  }
+  catch {
+    return [];
+  }
+}
+
+function saveCart(list: any[]) {
+  uni.setStorageSync(CART_STORAGE_KEY, JSON.stringify(list || []));
+}
+
+async function lockCouponIfNeeded(couponId: number | null) {
+  if (!couponId)
+    return;
+  // 购物车锁券：后端将实现 /coupons/:id/lock
+  await post(`/coupons/${couponId}/lock`, {
+    data: {
+      userId: Number(userStore.user_id || 0),
+      productId: productId.value,
     },
   });
 }
 
-async function submitOrder() {
+async function addToCart() {
   const userId = Number(userStore.user_id);
   const companyId = userStore.companyId ?? undefined;
   if (!userId) {
@@ -287,22 +298,37 @@ async function submitOrder() {
   }
   const qty = quantity.value > 0 ? quantity.value : 1;
   try {
-    const order = await OrderApi.createOrder({
-      userId,
-      companyId,
+    await lockCouponIfNeeded(selectedCouponId.value);
+
+    const cart = loadCart();
+    const idx = cart.findIndex((i: any) => Number(i.productId) === Number(productId.value));
+    const coupon = selectedCouponId.value
+      ? coupons.value.find(i => i.id === selectedCouponId.value) || null
+      : null;
+
+    const item = {
       productId: productId.value,
-      // 暂时复用当前用户信息作为订单上的客户信息
-      customerName: userStore.user_name || '',
-      customerPhone: userStore.phone || '',
-      customerCompany: userStore.companyName || '',
+      productName: product.value?.name || '',
+      unitPrice: Number(unitPrice.value || '0'),
       quantity: qty,
-      couponDiscount: couponDiscount.value || 0,
-    });
-    toast('下单成功', 'success');
+      couponId: selectedCouponId.value,
+      couponName: coupon?.name || '',
+      couponValue: coupon?.value || 0,
+      couponType: coupon?.type || '',
+      couponMinAmount: coupon?.minAmount || 0,
+    };
+
+    if (idx >= 0) {
+      cart[idx] = { ...cart[idx], ...item, quantity: Number(cart[idx].quantity || 0) + qty };
+    } else {
+      cart.push(item);
+    }
+    saveCart(cart);
+
+    toast('已加入购物车', 'success');
     setTimeout(() => {
-      // 下单后回到“我的订单”Tab
       uni.switchTab({
-        url: '/pages/sales/created/index',
+        url: '/pages/sales/cart/index',
       });
     }, 500);
   }
@@ -323,6 +349,7 @@ onLoad((options: any) => {
   if (initialQty > 0)
     quantity.value = initialQty;
   fetchProduct(id);
+  fetchCoupons();
 });
 </script>
 
@@ -413,50 +440,6 @@ onLoad((options: any) => {
   font-size: 30rpx;
   font-weight: 600;
   color: #ff4d4f;
-}
-
-.upload-card {
-  padding-bottom: 32rpx;
-}
-
-.section-title {
-  margin-bottom: 16rpx;
-  font-size: 26rpx;
-  color: #1b233b;
-}
-
-.contract-preview image {
-  width: 100%;
-  height: 260rpx;
-  border-radius: 16rpx;
-  background-color: #f5f6fa;
-}
-
-.contract-placeholder {
-  padding: 40rpx 24rpx;
-  border-radius: 16rpx;
-  border: 2rpx dashed #c4c8d6;
-  background-color: #f9fafc;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  row-gap: 12rpx;
-}
-
-.upload-icon {
-  font-size: 40rpx;
-  color: #0A7AFF;
-}
-
-.upload-text {
-  font-size: 26rpx;
-  color: #1b233b;
-}
-
-.upload-subtext {
-  font-size: 24rpx;
-  color: #999999;
 }
 
 .coupon-card {

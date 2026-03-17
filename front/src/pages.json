@@ -35,6 +35,20 @@
       "needLogin": true
     },
     {
+      "path": "pages/sales/cart/index",
+      "style": {
+        "navigationBarTitleText": "购物车"
+      },
+      "needLogin": true
+    },
+    {
+      "path": "pages/sales/cart-confirm/index",
+      "style": {
+        "navigationBarTitleText": "确认购买"
+      },
+      "needLogin": true
+    },
+    {
       "path": "pages/sales/address-select/index",
       "style": {
         "navigationBarTitleText": "选择收货地址"
@@ -124,6 +138,13 @@
       }
     },
     {
+      "path": "pages/sales/esign/index",
+      "style": {
+        "navigationBarTitleText": "合同签署"
+      },
+      "needLogin": true
+    },
+    {
       "path": "pages/sales/exchange-confirm/index",
       "style": {
         "navigationBarTitleText": "确认兑换"
@@ -191,8 +212,8 @@
     }, {
       "iconPath": "static/images/tabbar/icon_list.png",
       "selectedIconPath": "static/images/tabbar/icon_list_selected.png",
-      "pagePath": "pages/sales/points-mall/index",
-      "text": "积分商城"
+      "pagePath": "pages/sales/cart/index",
+      "text": "购物车"
     }, {
       "iconPath": "static/images/tabbar/icon_me.png",
       "selectedIconPath": "static/images/tabbar/icon_me_selected.png",

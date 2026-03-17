@@ -130,5 +130,24 @@ export class ProductsService implements OnModuleInit {
   findById(id: number) {
     return this.productsRepo.findOne({ where: { id } });
   }
+
+  /**
+   * 扣减库存（简单演示，未加事务控制）
+   */
+  async decreaseInventory(productId: number, quantity: number) {
+    const product = await this.findById(productId);
+    if (!product)
+      throw new Error('产品不存在');
+    const qty = Math.max(1, Number(quantity || 1));
+    if (typeof product.inventory === 'number') {
+      product.inventory -= qty;
+      if (product.inventory <= 0) {
+        product.inventory = 0;
+        (product as any).status = 'expired';
+      }
+      await this.productsRepo.save(product as any);
+    }
+    return product;
+  }
 }
 

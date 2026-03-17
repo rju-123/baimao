@@ -56,7 +56,7 @@ const userStore = useUserStore();
 
 const tabs = [
   { key: 'all', label: '全部' },
-  { key: 'pending_contract', label: '签约中' },
+  { key: 'signing', label: '签署中' },
   { key: 'pending_fulfillment', label: '履约中' },
   { key: 'completed', label: '已完成' },
   { key: 'cancelled', label: '已取消' },
@@ -76,13 +76,14 @@ const displayedOrders = computed(() => {
 
 function statusText(status: string) {
   const map: Record<string, string> = {
+    signing: '签署中',
     pending_contract: '签约中',
     pending_fulfillment: '履约中',
     in_progress: '履约中',
     completed: '已完成',
     cancelled: '已取消',
   };
-  return map[status] || '签约中';
+  return map[status] || '签署中';
 }
 
 /** 订单“客户”展示：优先显示产品客户（后台创建产品时填写的 customer），无则用下单人公司/姓名 */
@@ -229,6 +230,10 @@ onShow(() => {
 }
 
 .status-pending_contract {
+  color: #0A7AFF;
+}
+
+.status-signing {
   color: #0A7AFF;
 }
 

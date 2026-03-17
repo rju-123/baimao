@@ -77,6 +77,49 @@ export class OrdersService {
     return saved;
   }
 
+  /**
+   * 创建合并订单：复用现有订单表结构，使用 productName 存储多商品汇总信息
+   * 注意：这是为“购物车一次下单”提供的最小可用实现
+   */
+  async createMerged(params: {
+    userId: number;
+    companyId?: number;
+    firstProductId: number;
+    itemsSummary: string;
+    amount: number;
+    discountAmount: number;
+    payAmount: number;
+    status: string;
+  }) {
+    const user = await this.usersService.findById(params.userId);
+    const companyId = params.companyId ?? user?.companyId ?? null;
+    const orderNo = await this.generateOrderNo();
+
+    const entity = this.ordersRepo.create({
+      orderNo,
+      userId: params.userId,
+      salesName: user?.name ?? '',
+      salesPhone: user?.phone ?? '',
+      companyId,
+      productId: params.firstProductId || 0,
+      productName: params.itemsSummary,
+      productBrief: '',
+      productDetail: '',
+      productCustomer: '',
+      unitPrice: 0,
+      customerName: user?.name ?? '',
+      customerPhone: user?.phone ?? '',
+      customerCompany: '',
+      quantity: 1,
+      amount: params.amount,
+      discountAmount: params.discountAmount,
+      payAmount: params.payAmount,
+      status: params.status,
+      createtime: Math.floor(Date.now() / 1000),
+    });
+    return this.ordersRepo.save(entity);
+  }
+
   async findAllByUser(userId: number, status?: string) {
     // 先根据 userId 获取当前用户的最新公司信息
     const user = await this.usersService.findById(userId);

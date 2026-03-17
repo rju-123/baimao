@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 import { CouponsService } from './coupons.service';
 
 @Controller('coupons')
@@ -25,6 +25,49 @@ export class CouponsController {
     return {
       code: 200,
       message: '优惠券已使用',
+      result: coupon,
+    };
+  }
+
+  /**
+   * 加入购物车时锁定优惠券（占用）
+   */
+  @Post(':id/lock')
+  async lock(@Param('id') id: string, @Body() body: any) {
+    const userId = Number(body?.userId || body?.data?.userId || 0);
+    const productId = body?.productId ?? body?.data?.productId ?? null;
+    if (!userId) {
+      return {
+        code: 400,
+        message: '缺少 userId',
+        result: null,
+      };
+    }
+    const coupon = await this.couponsService.lockCoupon(Number(id), userId, productId);
+    return {
+      code: 200,
+      message: '优惠券已锁定',
+      result: coupon,
+    };
+  }
+
+  /**
+   * 从购物车移除商品/清空购物车时释放优惠券
+   */
+  @Post(':id/unlock')
+  async unlock(@Param('id') id: string, @Body() body: any) {
+    const userId = Number(body?.userId || body?.data?.userId || 0);
+    if (!userId) {
+      return {
+        code: 400,
+        message: '缺少 userId',
+        result: null,
+      };
+    }
+    const coupon = await this.couponsService.unlockCoupon(Number(id), userId);
+    return {
+      code: 200,
+      message: '优惠券已释放',
       result: coupon,
     };
   }

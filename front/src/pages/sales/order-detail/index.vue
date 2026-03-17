@@ -29,7 +29,7 @@
       </view>
       <view class="content-row">
         <view class="content-name">
-          {{ order.productName }} × {{ order.quantity }}
+          {{ order.productName }}
         </view>
         <view class="content-amount">
           ￥{{ formatAmount(order.payAmount) }}
@@ -103,13 +103,14 @@ const statusText = computed(() => {
   if (!order.value)
     return '';
   const map: Record<string, string> = {
+    signing: '签署中',
     pending_contract: '待签约',
     pending_fulfillment: '待履约',
     in_progress: '履约中',
     completed: '已完成',
     cancelled: '已取消',
   };
-  return map[order.value.status] || '待签约';
+  return map[order.value.status] || '签署中';
 });
 
 /** 金额可能为后端 decimal 字符串 */
@@ -246,6 +247,10 @@ onLoad((options: any) => {
 }
 
 .status-pending_contract {
+  color: #0A7AFF;
+}
+
+.status-signing {
   color: #0A7AFF;
 }
 

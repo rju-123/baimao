@@ -1,6 +1,6 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Between, LessThan } from 'typeorm';
+import { LessThan } from 'typeorm';
 import { Coupon } from './coupon.entity';
 import { Repository } from 'typeorm';
 
@@ -26,6 +26,9 @@ export class CouponsService implements OnModuleInit {
           validFrom: now,
           validTo: end,
           status: 'available',
+          lockedByUserId: null,
+          lockedForProductId: null,
+          lockedAt: null,
         },
         {
           userId: 1,
@@ -36,6 +39,9 @@ export class CouponsService implements OnModuleInit {
           validFrom: now,
           validTo: end,
           status: 'available',
+          lockedByUserId: null,
+          lockedForProductId: null,
+          lockedAt: null,
         },
       ];
       await this.couponsRepo.save(this.couponsRepo.create(seed));
@@ -54,6 +60,45 @@ export class CouponsService implements OnModuleInit {
     if (!coupon)
       return null;
     coupon.status = 'used';
+    coupon.lockedByUserId = null;
+    coupon.lockedForProductId = null;
+    coupon.lockedAt = null;
+    return this.couponsRepo.save(coupon);
+  }
+
+  async lockCoupon(id: number, userId: number, productId?: number | null) {
+    const coupon = await this.couponsRepo.findOne({ where: { id } });
+    if (!coupon)
+      throw new Error('优惠券不存在');
+    await this.expireOverdue();
+    // 仅允许锁定可用券；如果已被同一用户锁定也认为成功（幂等）
+    if (coupon.status === 'locked') {
+      if (coupon.lockedByUserId === userId)
+        return coupon;
+      throw new Error('优惠券已被占用');
+    }
+    if (coupon.status !== 'available')
+      throw new Error('优惠券不可用');
+    coupon.status = 'locked';
+    coupon.lockedByUserId = userId;
+    coupon.lockedForProductId = productId ?? null;
+    coupon.lockedAt = new Date();
+    return this.couponsRepo.save(coupon);
+  }
+
+  async unlockCoupon(id: number, userId: number) {
+    const coupon = await this.couponsRepo.findOne({ where: { id } });
+    if (!coupon)
+      return null;
+    if (coupon.status !== 'locked')
+      return coupon;
+    // 只允许锁定者释放
+    if (coupon.lockedByUserId !== userId)
+      throw new Error('无权释放该优惠券');
+    coupon.status = 'available';
+    coupon.lockedByUserId = null;
+    coupon.lockedForProductId = null;
+    coupon.lockedAt = null;
     return this.couponsRepo.save(coupon);
   }
 
@@ -65,6 +110,19 @@ export class CouponsService implements OnModuleInit {
         validTo: LessThan(now),
       },
       { status: 'expired' },
+    );
+    // 已锁定但过期的优惠券也标记为过期并释放锁定
+    await this.couponsRepo.update(
+      {
+        status: 'locked',
+        validTo: LessThan(now),
+      },
+      {
+        status: 'expired',
+        lockedByUserId: null,
+        lockedForProductId: null,
+        lockedAt: null,
+      },
     );
   }
 }
