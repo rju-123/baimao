@@ -81,6 +81,8 @@ export class PointsService implements OnModuleInit {
     let assignedCode: string | null = null;
     let usedCode: PointsCode | null = null;
     if (item.type === 'virtual') {
+      if (item.stock < dto.quantity)
+        throw new Error('库存不足');
       // 从券码池中取出一条未使用券码
       usedCode = await this.codesRepo.findOne({
         where: {
@@ -91,6 +93,9 @@ export class PointsService implements OnModuleInit {
       if (!usedCode)
         throw new Error('券码已用完，请联系管理员补充库存');
       assignedCode = usedCode.code;
+      // 虚拟商品兑换成功后同步扣减库存，保证前后端库存展示一致
+      item.stock -= dto.quantity;
+      await this.itemsRepo.save(item);
     }
 
     const now = Math.floor(Date.now() / 1000);

@@ -1,4 +1,16 @@
 define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefined, Backend, Table, Form) {
+    // 列表文本展示长度限制：最多 15 个中文字符（超出省略）
+    function limitText(value, maxLen) {
+        var text = value == null ? '' : String(value);
+        if (!text) return '-';
+        var plain = text.replace(/\s+/g, ' ').trim();
+        if (!plain) return '-';
+        if (plain.length <= maxLen) return $('<div/>').text(plain).html();
+        var shortText = plain.slice(0, maxLen) + '...';
+        var escaped = $('<div/>').text(shortText).html();
+        var fullEscaped = $('<div/>').text(plain).html();
+        return '<span title="' + fullEscaped + '">' + escaped + '</span>';
+    }
 
     var Controller = {
         index: function () {
@@ -25,7 +37,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                     [
                         {checkbox: true},
                         {field: 'id', title: __('Id'), sortable: true},
-                        {field: 'name', title: __('Name'), operate: 'LIKE'},
+                        {field: 'name', title: __('Name'), operate: 'LIKE', formatter: function (value) { return limitText(value, 15); }},
                         {
                             field: 'type',
                             title: __('Type'),
@@ -36,8 +48,8 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                             }
                         },
                         // 去掉“分类”字段，改为显示客户字段
-                        {field: 'customer', title: __('Customer'), operate: 'LIKE'},
-                        {field: 'brief', title: __('Brief'), operate: 'LIKE'},
+                        {field: 'customer', title: __('Customer'), operate: 'LIKE', formatter: function (value) { return limitText(value, 15); }},
+                        {field: 'brief', title: __('Brief'), operate: 'LIKE', formatter: function (value) { return limitText(value, 15); }},
                         {field: 'price', title: __('Price'), operate: 'BETWEEN'},
                         {field: 'discount_price', title: __('Discount price'), operate: 'BETWEEN'},
                         {field: 'inventory', title: __('Inventory'), operate: 'BETWEEN'},

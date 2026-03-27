@@ -8,9 +8,21 @@
         </div>
     </div>
     <div class="form-group">
+        <label for="c-userName" class="control-label col-xs-12 col-sm-2">{:__('User name')}:</label>
+        <div class="col-xs-12 col-sm-4">
+            <input id="c-userName" class="form-control" type="text" value="{$row.userName|default='-'|htmlentities}" readonly>
+        </div>
+    </div>
+    <div class="form-group">
         <label for="c-itemId" class="control-label col-xs-12 col-sm-2">{:__('Item id')}:</label>
         <div class="col-xs-12 col-sm-4">
             <input id="c-itemId" class="form-control" name="row[itemId]" type="number" value="{$row.itemId|htmlentities}" readonly>
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="c-itemName" class="control-label col-xs-12 col-sm-2">{:__('Item name')}:</label>
+        <div class="col-xs-12 col-sm-4">
+            <input id="c-itemName" class="form-control" type="text" value="{$row.itemName|default='-'|htmlentities}" readonly>
         </div>
     </div>
     <div class="form-group">

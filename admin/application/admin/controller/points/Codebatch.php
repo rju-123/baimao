@@ -46,7 +46,26 @@ class Codebatch extends Backend
             $filePath = isset($params['file']) ? trim($params['file']) : '';
 
             if ($filePath !== '') {
-                $realPath = ROOT_PATH . 'public' . $filePath;
+                // 兼容三种输入：
+                // 1) 完整 URL: http://127.0.0.1:8000/uploads/xxx.xlsx
+                // 2) 站内绝对路径: /uploads/xxx.xlsx
+                // 3) 相对路径: uploads/xxx.xlsx
+                $rawPath = $filePath;
+                if (preg_match('/^https?:\/\//i', $rawPath)) {
+                    $parsed = parse_url($rawPath, PHP_URL_PATH);
+                    $rawPath = is_string($parsed) ? $parsed : '';
+                }
+                $rawPath = trim($rawPath);
+                if ($rawPath === '') {
+                    $this->error('券码文件路径无效，请重新上传');
+                }
+                if (strpos($rawPath, '/uploads/') === 0) {
+                    $realPath = ROOT_PATH . 'public' . $rawPath;
+                } elseif (strpos($rawPath, 'uploads/') === 0) {
+                    $realPath = ROOT_PATH . 'public/' . $rawPath;
+                } else {
+                    $realPath = ROOT_PATH . 'public/uploads/' . ltrim($rawPath, '/');
+                }
                 if (!is_file($realPath)) {
                     $this->error('券码文件不存在，请重新上传');
                 }
@@ -118,10 +137,30 @@ class Codebatch extends Backend
                 $this->error('请通过上传文件或填写文本提供至少一条券码');
             }
 
+            // 1) 文件内去重，避免同批次重复导致唯一索引冲突
+            $codes = array_values(array_unique($codes));
+            // 2) 跳过数据库中已存在的券码（fa_points_codes.code 全局唯一）
+            $existingCodes = (new CodeModel)
+                ->where('code', 'in', $codes)
+                ->column('code');
+            if (!empty($existingCodes)) {
+                $existsMap = array_flip($existingCodes);
+                $codes = array_values(array_filter($codes, function ($code) use ($existsMap) {
+                    return !isset($existsMap[$code]);
+                }));
+            }
+            if (empty($codes)) {
+                $this->error('导入失败：本次文件中的券码均已存在，请更换新券码后重试');
+            }
+
             $itemId = (int)$params['item_id'];
             $item = PointsMallItem::get($itemId);
             if (!$item || $item['type'] !== 'virtual') {
                 $this->error('只允许为虚拟商品创建券码批次');
+            }
+            // 券码数量必须与虚拟商品库存严格一致
+            if ((int)$item['stock'] !== count($codes)) {
+                $this->error('券码数与库存不符');
             }
 
             $time = time();
@@ -170,7 +209,7 @@ class Codebatch extends Backend
                 $this->error($e->getMessage());
             }
 
-            $this->success();
+            $this->success('券码导入成功');
         }
 
         return parent::add();

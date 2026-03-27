@@ -2,10 +2,9 @@
 
 return array (
   'name' => '白帽子后台管理系统',
-  'api_base_url' => 'http://127.0.0.1:3000',
   'beian' => '',
   'cdnurl' => '',
-  'version' => '1.0.35',
+  'version' => '1.0.36',
   'timezone' => 'Asia/Shanghai',
   'forbiddenip' => '',
   'languages' => 

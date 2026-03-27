@@ -21,7 +21,9 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                         {checkbox: true},
                         {field: 'id', title: __('Id'), sortable: true},
                         {field: 'userId', title: __('User id'), operate: 'BETWEEN'},
+                        {field: 'userName', title: __('User name'), operate: false},
                         {field: 'itemId', title: __('Item id'), operate: 'BETWEEN'},
+                        {field: 'itemName', title: __('Item name'), operate: false},
                         {field: 'quantity', title: __('Quantity'), operate: 'BETWEEN'},
                         {field: 'pointsSpent', title: __('Points spent'), operate: 'BETWEEN'},
                         {

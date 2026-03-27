@@ -31,6 +31,8 @@ export interface ContractOrderData {
   signDate: string;
   /** 交付对象/最终用户（公司名称） */
   deliveryTarget: string;
+  /** 交付时间（如：2026-03-28） */
+  deliveryTime: string;
   items: Array<{
     index: number;
     name: string;
@@ -78,6 +80,7 @@ export class ContractService {
     const payAmountFmt = Number.isFinite(payNum) ? payNum.toFixed(2) : '0.00';
 
     const deliveryTarget = await this.resolveDeliveryTarget(order, items);
+    const deliveryTime = await this.resolveDeliveryTime(order);
     const signDate = formatDateZhYmd(new Date());
 
     const orderData: ContractOrderData = {
@@ -92,6 +95,7 @@ export class ContractService {
       companyPhone: (company?.contactPhone ?? '').trim() || '—',
       signDate: signDate || '—',
       deliveryTarget: deliveryTarget || '—',
+      deliveryTime: deliveryTime || '—',
       items,
     };
 
@@ -288,6 +292,22 @@ export class ContractService {
     // 兜底：订单产品名
     const name = String(order.productName ?? '').trim();
     return name || '—';
+  }
+
+  /**
+   * 合同“交付时间”占位符值：
+   * - 单品订单：取产品表 fa_product.delivery_time
+   * - 合并单/缺失：返回兜底文案
+   */
+  private async resolveDeliveryTime(order: Order): Promise<string> {
+    const pid = Number(order.productId ?? 0);
+    if (pid) {
+      const product = await this.productRepo.findOne({ where: { id: pid } });
+      const t = String((product as any)?.deliveryTime ?? '').trim();
+      if (t)
+        return t;
+    }
+    return '以合同约定为准';
   }
 }
 

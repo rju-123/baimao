@@ -143,6 +143,8 @@ const userStore = useUserStore();
 const loading = ref(false);
 const item = ref<PointsMallItem | null>(null);
 const selectedAddress = ref<AddressItem | null>(null);
+const confirming = ref(false);
+const currentItemId = ref(0);
 
 // 虚拟商品兑换成功弹窗状态
 const showCodeDialog = ref(false);
@@ -163,6 +165,8 @@ const remainPoints = computed(() => currentPoints.value - totalPoints.value);
 
 const confirmDisabled = computed(() => {
   if (!item.value)
+    return true;
+  if (confirming.value)
     return true;
   if (remainPoints.value < 0)
     return true;
@@ -225,6 +229,8 @@ const goSelectAddress = () => {
 const handleConfirm = async () => {
   if (!item.value)
     return;
+  if (confirming.value)
+    return;
   // 实体商品必须选择收货地址
   if (item.value.type === 'physical' && !selectedAddress.value) {
     uni.showToast({ title: '请选择收货地址', icon: 'none' });
@@ -235,12 +241,22 @@ const handleConfirm = async () => {
     uni.showToast({ title: '请先登录', icon: 'none' });
     return;
   }
+  confirming.value = true;
   try {
+    const latest = await PointsApi.getMallItem(item.value.id);
+    if (!latest) {
+      throw new Error('商品不存在或已下架');
+    }
+    item.value = latest;
+    if (Number(latest.stock || 0) < 1) {
+      throw new Error('库存不足');
+    }
+
     const payload = {
       userId,
-      itemId: item.value.id,
+      itemId: latest.id,
       quantity: 1,
-      addressSnapshot: item.value.type === 'physical' && selectedAddress.value
+      addressSnapshot: latest.type === 'physical' && selectedAddress.value
         ? `${selectedAddress.value.receiverName} ${selectedAddress.value.receiverPhone} ${selectedAddress.value.region} ${selectedAddress.value.detail}`
         : undefined,
     };
@@ -250,25 +266,31 @@ const handleConfirm = async () => {
     const newPoints = currentPoints.value - totalPoints.value;
     userStore.setInfo({ points: newPoints >= 0 ? newPoints : 0 });
 
-    if (item.value.type === 'virtual') {
+    if (latest.type === 'virtual') {
       // 打开自定义券码弹窗
-      codeProductName.value = item.value.name;
+      codeProductName.value = latest.name;
       successCode.value = record.code || '暂无券码，请联系工作人员处理';
       showCodeDialog.value = true;
+      confirming.value = false;
     } else {
-      // 实体商品：仍然提示等待发货
-      uni.showToast({ title: '兑换成功，等待发货', icon: 'success' });
+      // 实体商品：提示兑换成功并返回积分商城
+      uni.showToast({ title: '兑换成功', icon: 'success', duration: 800 });
       setTimeout(() => {
         uni.switchTab({
           url: '/pages/sales/points-mall/index',
+          fail: () => {
+            // 兜底：极端情况下 switchTab 失败时仍确保回到积分商城
+            uni.reLaunch({ url: '/pages/sales/points-mall/index' });
+          },
         });
-      }, 400);
+      }, 850);
     }
   }
   catch (err: any) {
     console.error('exchange error', err);
     const msg = (err && err.message) || '兑换失败，请稍后重试';
     uni.showToast({ title: msg, icon: 'none' });
+    confirming.value = false;
   }
 };
 
@@ -287,14 +309,22 @@ const handleCopyCode = () => {
 // 弹窗“我知道了”按钮
 const handleCodeDialogConfirm = () => {
   showCodeDialog.value = false;
-  uni.switchTab({
-    url: '/pages/sales/points-mall/index',
-  });
+  // 先关闭弹窗，再执行跳转；并在 switchTab 失败时兜底 reLaunch
+  setTimeout(() => {
+    uni.switchTab({
+      url: '/pages/sales/points-mall/index',
+      fail: () => {
+        uni.reLaunch({ url: '/pages/sales/points-mall/index' });
+      },
+    });
+  }, 50);
 };
 
 // 页面显示时刷新积分，并尝试读取上一次地址选择结果
 onShow(() => {
   loadUserPoints();
+  if (currentItemId.value > 0)
+    loadItem(currentItemId.value);
   try {
     const stored = uni.getStorageSync('sales_selected_address');
     if (stored) {
@@ -319,6 +349,7 @@ onLoad((options: Record<string, any>) => {
     uni.showToast({ title: '缺少商品信息', icon: 'none' });
     return;
   }
+  currentItemId.value = id;
   loadItem(id);
   // 首次加载时也立即拉取一次最新积分，避免当前积分为 0 导致按钮一直禁用
   loadUserPoints();

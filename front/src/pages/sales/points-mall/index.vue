@@ -78,7 +78,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { onShow } from '@dcloudio/uni-app';
 import { PointsApi, UserApi } from '@/api';
 import useUserStore from '@/store/modules/user';
@@ -156,6 +156,7 @@ onMounted(() => {
 
 // 每次进入页面时，直接从后端读取最新积分并同步到本地 store
 onShow(async () => {
+  fetchItems();
   const id = Number(userStore.user_id || 0);
   if (!id)
     return;

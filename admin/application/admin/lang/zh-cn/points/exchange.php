@@ -3,7 +3,9 @@
 return [
     'Id'               => 'ID',
     'User id'          => '用户ID',
+    'User name'        => '用户姓名',
     'Item id'          => '商品ID',
+    'Item name'        => '商品名称',
     'Quantity'         => '数量',
     'Points spent'     => '消耗积分',
     'Kind'             => '兑换种类',
