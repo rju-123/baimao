@@ -20,7 +20,7 @@ export class EsignController {
   }
 
   @Get('flows/:flowId')
-  async getFlow(@Param('flowId') flowId: string) {
+  async getFlow(@Param('flowId') flowId: string): Promise<any> {
     const data = await this.esignService.getFlow(flowId);
     return { code: 200, message: 'OK', result: data };
   }

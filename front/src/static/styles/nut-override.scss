@@ -1,0 +1,24 @@
+/* NutUI 组件样式覆盖 - Glassmorphism-lite 风格 */
+/* 主按钮：纯蓝实心；次按钮：白底 + 浅灰边框 + 蓝字 */
+
+/* nut-tabs 下划线/高亮色 */
+.nut-tabs__titles .nut-tabs__titles-item--active {
+  color: #007AFF;
+}
+.nut-tabs__titles .nut-tabs__titles-item__line {
+  background: #007AFF;
+}
+
+/* nut-input 边框、圆角 */
+.nut-input {
+  border-radius: 12px;
+}
+.nut-input__inner {
+  border-radius: 12px;
+}
+
+/* nut-popup 圆角、阴影 */
+.nut-popup {
+  border-radius: 24rpx 24rpx 0 0;
+  box-shadow: 0 -10rpx 40rpx rgba(0, 122, 255, 0.08);
+}

@@ -2,7 +2,17 @@
  * 替代 uni.$u 的轻量工具，不依赖 uview
  */
 export function toast(title: string, icon: 'success' | 'error' | 'none' = 'none') {
-  uni.showToast({ title, icon });
+  let t = String(title ?? '');
+  // #ifdef MP-WEIXIN
+  // 微信小程序 showToast 在带 success/error 图标时可显示字符更少；
+  // 文案偏长时强制使用 icon=none，避免被截断。
+  let wxIcon = icon;
+  if (wxIcon !== 'none' && t.length > 7)
+    wxIcon = 'none';
+  uni.showToast({ title: t, icon: wxIcon });
+  return;
+  // #endif
+  uni.showToast({ title: t, icon });
 }
 
 export function route(options: { type: 'navigateTo' | 'redirectTo' | 'switchTab' | 'reLaunch'; url: string }) {

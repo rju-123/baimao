@@ -17,16 +17,3 @@
     </div>
 </div>
 
-<script type="text/javascript">
-    require.config({
-        paths: {
-            'backend/points/mallitem': '/assets/js/backend/points/mallitem'
-        }
-    });
-    require(['backend', 'table', 'form', 'backend/points/mallitem'], function (Backend, Table, Form, Controller) {
-        if (Controller && typeof Controller.index === 'function') {
-            Controller.index();
-        }
-    });
-</script>
-

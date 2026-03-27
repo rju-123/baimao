@@ -531,12 +531,19 @@ define(['jquery', 'bootstrap', 'moment', 'moment/locale/zh-cn', 'bootstrap-table
                             var data = table.bootstrapTable('getData');
                             var current = data[parseInt($(this).data("index"))];
                             var options = table.bootstrapTable('getOptions');
-                            //改变的值和改变的ID集合
-                            var ids = $.map($("tbody tr:visible", table), function (tr) {
-                                return data[parseInt($(tr).data("index"))][options.pk];
+                            //改变的值和改变的ID集合（树形结构时仅取同层级 sibling）
+                            var allRows = $.map($("tbody tr:visible", table), function (tr) {
+                                var row = data[parseInt($(tr).data("index"))];
+                                return row ? row : null;
                             });
+                            var currentPid = typeof current.pid != 'undefined' ? current.pid : '';
+                            var ids = $.map(allRows, function (row) {
+                                if (!row) return null;
+                                if (currentPid !== '' && typeof row.pid != 'undefined' && row.pid != currentPid) return null;
+                                return row[options.pk];
+                            }).filter(Boolean);
                             var changeid = current[options.pk];
-                            var pid = typeof current.pid != 'undefined' ? current.pid : '';
+                            var pid = currentPid;
                             var params = {
                                 url: table.bootstrapTable('getOptions').extend.dragsort_url,
                                 data: {

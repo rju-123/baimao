@@ -47,8 +47,44 @@ export class Request {
     const method = (cfg.method || 'GET') as string;
 
     return new Promise((resolve, reject) => {
-      if (method === 'UPLOAD' || method === 'DOWNLOAD') {
-        reject(new Error('UPLOAD/DOWNLOAD not implemented in this wrapper'));
+      if (method === 'UPLOAD') {
+        const filePath = (cfg as any).filePath ?? (cfg.data as any)?.filePath;
+        const name = (cfg as any).name ?? (cfg.data as any)?.name ?? 'file';
+        if (!filePath) {
+          reject(new Error('UPLOAD requires filePath in data'));
+          return;
+        }
+        const token = (cfg.header as any)?.token;
+        uni.uploadFile({
+          url,
+          filePath,
+          name,
+          header: token ? { token } : {},
+          timeout: 60000,
+          success: (res) => {
+            const data = typeof res.data === 'string' ? JSON.parse(res.data || '{}') : (res.data || {});
+            const response: HttpResponse = { data, statusCode: res.statusCode || 0, config: cfg };
+            if (this._resFulfilled) {
+              Promise.resolve(this._resFulfilled(response)).then(resolve).catch(reject);
+            }
+            else {
+              resolve(response);
+            }
+          },
+          fail: (err) => {
+            const response = { data: null, statusCode: 0, config: cfg, ...err };
+            if (this._resRejected) {
+              Promise.resolve(this._resRejected(response)).catch(reject);
+            }
+            else {
+              reject(response);
+            }
+          },
+        });
+        return;
+      }
+      if (method === 'DOWNLOAD') {
+        reject(new Error('DOWNLOAD not implemented in this wrapper'));
         return;
       }
       uni.request({
@@ -56,6 +92,7 @@ export class Request {
         method: method as any,
         data: cfg.data,
         header: { 'Content-Type': 'application/json', ...cfg.header },
+        timeout: 60000,
         success: (res) => {
           const response: HttpResponse = { data: res.data as any, statusCode: res.statusCode || 0, config: cfg };
           if (this._resFulfilled) {

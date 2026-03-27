@@ -18,7 +18,7 @@
         v-for="item in displayedOrders"
         :key="item.id"
         class="order-card"
-        @tap="goDetail(item)"
+        @tap="handleCardTap(item)"
       >
         <view class="order-header">
           <text class="order-no">{{ item.orderNo }}</text>
@@ -86,11 +86,10 @@ function statusText(status: string) {
   return map[status] || '签署中';
 }
 
-/** 订单“客户”展示：优先显示产品客户（后台创建产品时填写的 customer），无则用下单人公司/姓名 */
+/** 订单“客户”展示：仅展示后台产品信息中的客户信息（product_customer），与后台管理一致 */
 function orderCustomerDisplay(order: Order): string {
-  const s = order.productCustomer?.trim?.();
-  if (s) return s;
-  return (order.customerCompany || order.customerName || '').trim() || '';
+  const s = (order.productCustomer ?? (order as any).product_customer ?? '').trim();
+  return s;
 }
 
 /** 金额可能为后端 decimal 字符串，统一格式化为整数展示 */
@@ -152,7 +151,7 @@ async function fetchOrders() {
   }
 }
 
-function goDetail(item: Order) {
+function handleCardTap(item: Order) {
   route({
     type: 'navigateTo',
     url: `/pages/sales/order-detail/index?id=${item.id}`,
@@ -172,18 +171,19 @@ onShow(() => {
 <style scoped lang="scss">
 .page {
   min-height: 100vh;
-  padding: 24rpx 24rpx 32rpx;
+  padding: 32rpx 32rpx 40rpx;
   box-sizing: border-box;
-  background-color: #f7f8fa;
+  background: linear-gradient(180deg, var(--theme-bg-gradient-start) 0%, var(--theme-bg-gradient-end) 100%);
 }
 
 .tabs {
   display: flex;
   align-items: center;
   padding: 8rpx;
-  border-radius: 9999rpx;
+  border-radius: 24rpx;
   background-color: #ffffff;
-  margin-bottom: 24rpx;
+  margin-bottom: 32rpx;
+  box-shadow: var(--theme-card-shadow);
 }
 
 .tab-item {
@@ -191,12 +191,12 @@ onShow(() => {
   text-align: center;
   padding: 16rpx 0;
   font-size: 26rpx;
-  color: #666666;
-  border-radius: 9999rpx;
+  color: var(--theme-text-subtitle);
+  border-radius: 20rpx;
 }
 
 .tab-item-active {
-  background-color: #0A7AFF;
+  background-color: #007AFF;
   color: #ffffff;
   font-weight: 600;
 }
@@ -206,11 +206,11 @@ onShow(() => {
 }
 
 .order-card {
-  padding: 20rpx 24rpx;
-  margin-bottom: 16rpx;
-  border-radius: 20rpx;
+  padding: 28rpx 32rpx;
+  margin-bottom: 24rpx;
+  border-radius: var(--theme-card-radius);
   background-color: #ffffff;
-  box-shadow: 0 6rpx 18rpx rgba(0, 0, 0, 0.04);
+  box-shadow: var(--theme-card-shadow);
 }
 
 .order-header {
@@ -222,7 +222,7 @@ onShow(() => {
 
 .order-no {
   font-size: 24rpx;
-  color: #8e8e93;
+  color: var(--theme-text-subtitle);
 }
 
 .order-status {
@@ -230,11 +230,11 @@ onShow(() => {
 }
 
 .status-pending_contract {
-  color: #0A7AFF;
+  color: #007AFF;
 }
 
 .status-signing {
-  color: #0A7AFF;
+  color: #007AFF;
 }
 
 .status-pending_fulfillment,
@@ -247,20 +247,20 @@ onShow(() => {
 }
 
 .status-cancelled {
-  color: #8e8e93;
+  color: var(--theme-text-subtitle);
 }
 
 .order-name {
   margin-bottom: 12rpx;
   font-size: 28rpx;
   font-weight: 600;
-  color: #1b233b;
+  color: var(--theme-text-title);
 }
 
 .order-customer {
   margin-bottom: 8rpx;
   font-size: 24rpx;
-  color: #8e8e93;
+  color: var(--theme-text-subtitle);
 }
 
 .order-footer {
@@ -277,14 +277,14 @@ onShow(() => {
 
 .order-time {
   font-size: 24rpx;
-  color: #8e8e93;
+  color: var(--theme-text-subtitle);
 }
 
 .empty {
   margin-top: 40rpx;
   text-align: center;
   font-size: 26rpx;
-  color: #8e8e93;
+  color: var(--theme-text-subtitle);
 }
 </style>
 

@@ -125,23 +125,16 @@ async function complete() {
     return;
   loading.value = true;
   try {
-    const res = await post<{ orderId: number }>('/esign/flows/complete', {
+    await post<{ orderId: number }>('/esign/flows/complete', {
       data: { flowId: flowId.value },
     });
-    const orderId = (res as any)?.orderId;
-    // 创建订单成功后清空购物车（本地存储）
+    // 创建订单成功后清空购物车（本地存储）并进入「我的订单」，不进入订单详情、不保留其他页面
     try {
       uni.removeStorageSync(CART_STORAGE_KEY);
     } catch {}
     toast('签署完成，订单已创建', 'success');
     setTimeout(() => {
-      if (orderId) {
-        uni.navigateTo({
-          url: `/pages/sales/order-detail/index?id=${encodeURIComponent(String(orderId))}`,
-        });
-      } else {
-        uni.switchTab({ url: '/pages/sales/created/index' });
-      }
+      uni.reLaunch({ url: '/pages/sales/created/index' });
     }, 400);
   } catch (e: any) {
     console.error('complete esign error', e);
@@ -163,14 +156,14 @@ onLoad((options: any) => {
   min-height: 100vh;
   padding: 24rpx;
   box-sizing: border-box;
-  background-color: #f7f8fa;
+  background: linear-gradient(180deg, var(--theme-bg-gradient-start) 0%, var(--theme-bg-gradient-end) 100%);
 }
 
 .card {
   padding: 28rpx 28rpx 32rpx;
-  border-radius: 24rpx;
+  border-radius: var(--theme-card-radius);
   background-color: #ffffff;
-  box-shadow: 0 10rpx 30rpx rgba(0, 0, 0, 0.04);
+  box-shadow: var(--theme-card-shadow);
 }
 
 .title {
@@ -202,7 +195,7 @@ onLoad((options: any) => {
 }
 
 .btn.primary {
-  background-color: #0A7AFF;
+  background-color: #007AFF;
 }
 
 .btn.secondary {

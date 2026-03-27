@@ -4,6 +4,11 @@ export class CreatePartnerInvoiceDto {
   @IsInt()
   userId: number;
 
+  /** 销售人员姓名（“你的姓名”） */
+  @IsString()
+  @IsNotEmpty()
+  salesName: string;
+
   @IsString()
   @IsNotEmpty()
   companyName: string;
@@ -33,6 +38,7 @@ export class CreatePartnerInvoiceDto {
   bankAccount: string;
 
   @IsString()
+  @IsNotEmpty()
   invoiceImagePath: string;
 }
 

@@ -78,6 +78,10 @@
         <view class="long-text">
           {{ record.addressSnapshot }}
         </view>
+        <view v-if="record?.code" class="express-row">
+          <text class="label">快递单号</text>
+          <text class="value">{{ record.code }}</text>
+        </view>
       </view>
 
       <!-- 券码信息（虚拟商品） -->
@@ -181,16 +185,17 @@ onLoad((options: Record<string, any>) => {
 <style scoped lang="scss">
 .page {
   min-height: 100vh;
-  padding: 24rpx;
+  padding: 32rpx;
   box-sizing: border-box;
-  background-color: #f2f2f7;
+  background: linear-gradient(180deg, var(--theme-bg-gradient-start) 0%, var(--theme-bg-gradient-end) 100%);
 }
 
 .card {
   background-color: #ffffff;
-  border-radius: 16rpx;
-  padding: 24rpx;
-  margin-bottom: 16rpx;
+  border-radius: var(--theme-card-radius);
+  padding: 28rpx 32rpx;
+  margin-bottom: 20rpx;
+  box-shadow: var(--theme-card-shadow);
 }
 
 .status-card {
@@ -237,6 +242,25 @@ onLoad((options: Record<string, any>) => {
   font-size: 24rpx;
   color: #000000;
   line-height: 1.6;
+}
+
+.express-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 24rpx;
+  margin-top: 16rpx;
+  padding-top: 16rpx;
+  border-top: 1rpx solid #f0f0f0;
+}
+
+.express-row .label {
+  color: #8e8e93;
+}
+
+.express-row .value {
+  color: #000000;
+  font-weight: 500;
 }
 
 .code-row {

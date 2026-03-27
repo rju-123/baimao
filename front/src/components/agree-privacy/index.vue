@@ -1,5 +1,5 @@
 <template>
-  <nut-popup v-model:visible="visible" position="bottom" round round-radius="20" @close="closeAgreePrivacy">
+  <nut-popup v-model:visible="visible" position="bottom" round round-radius="24" @close="closeAgreePrivacy">
     <view class="p-30rpx">
       <view class="text-lg text-black font-bold">
         <span>{{ initTitle }}</span>
@@ -129,20 +129,20 @@ onMounted(() => {
   font-size: 14px;
   font-weight: 500;
   line-height: 1.5;
-  color: #fff;
   text-align: center;
   text-decoration: none;
-  border-radius: 18rpx;
+  border-radius: 24rpx;
 }
 
 .button-default {
-  color: #07c160;
-  background-color: rgb(0 0 0 / 5%);
+  color: #007AFF;
+  background-color: #ffffff;
+  border: 1px solid #E0E0E0;
 }
 
 .button-primary {
   color: #fff;
-  background-color: #07c160;
+  background-color: #007AFF;
 }
 
 button {
@@ -159,7 +159,7 @@ button::after {
 }
 
 .text-decoration {
-  color: #07c160;
+  color: #007AFF;
   text-decoration: underline;
 }
 </style>

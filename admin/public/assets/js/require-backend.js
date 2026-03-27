@@ -134,6 +134,10 @@ require(['jquery', 'bootstrap'], function ($, undefined) {
     paths['lang'] = Config.moduleurl + '/ajax/lang?callback=define&controllername=' + Config.controllername + '&lang=' + Config.language;
     // 避免目录冲突
     paths['backend/'] = 'backend/';
+    // 合并 script.html 中的自定义模块路径
+    if (window.__requireExtraPaths) {
+        paths = Object.assign(paths, window.__requireExtraPaths);
+    }
     // 如果是英文，则移除默认的定义
     if (Config.language === 'en') {
         $.each(requirejs.s.contexts._.config.paths, function (key, value) {

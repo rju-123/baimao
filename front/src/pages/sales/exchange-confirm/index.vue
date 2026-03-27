@@ -328,16 +328,17 @@ onLoad((options: Record<string, any>) => {
 <style scoped lang="scss">
 .page {
   min-height: 100vh;
-  padding: 24rpx;
+  padding: 32rpx;
   box-sizing: border-box;
-  background-color: #f2f2f7;
+  background: linear-gradient(180deg, var(--theme-bg-gradient-start) 0%, var(--theme-bg-gradient-end) 100%);
 }
 
 .card {
   background-color: #ffffff;
-  border-radius: 16rpx;
-  padding: 24rpx;
-  margin-bottom: 16rpx;
+  border-radius: var(--theme-card-radius);
+  padding: 28rpx 32rpx;
+  margin-bottom: 20rpx;
+  box-shadow: var(--theme-card-shadow);
 }
 
 .card-title {
@@ -448,8 +449,8 @@ onLoad((options: Record<string, any>) => {
   min-height: 120rpx;
   padding: 16rpx;
   box-sizing: border-box;
-  border-radius: 12rpx;
-  background-color: #f7f8fa;
+  border-radius: 24rpx;
+  background-color: #f5f6fa;
   font-size: 24rpx;
 }
 
@@ -504,9 +505,10 @@ onLoad((options: Record<string, any>) => {
 .dialog {
   width: 600rpx;
   padding: 40rpx 32rpx 32rpx;
-  border-radius: 24rpx;
+  border-radius: var(--theme-card-radius);
   background-color: #ffffff;
   text-align: center;
+  box-shadow: var(--theme-card-shadow);
 }
 
 .dialog-icon {
@@ -553,8 +555,8 @@ onLoad((options: Record<string, any>) => {
 
 .dialog-code-copy {
   padding: 8rpx 20rpx;
-  border-radius: 30rpx;
-  background-color: #0a7aff;
+  border-radius: var(--theme-btn-radius);
+  background-color: #007AFF;
   color: #ffffff;
   font-size: 24rpx;
 }

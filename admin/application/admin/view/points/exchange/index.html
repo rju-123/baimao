@@ -17,16 +17,3 @@
     </div>
 </div>
 
-<script type="text/javascript">
-    require.config({
-        paths: {
-            'backend/points/exchange': '/assets/js/backend/points/exchange'
-        }
-    });
-    require(['backend', 'table', 'form', 'backend/points/exchange'], function (Backend, Table, Form, Controller) {
-        if (Controller && typeof Controller.index === 'function') {
-            Controller.index();
-        }
-    });
-</script>
-

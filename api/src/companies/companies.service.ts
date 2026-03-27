@@ -21,7 +21,9 @@ export class CompaniesService {
   ) {}
 
   findAll() {
-    return this.companiesRepo.find();
+    return this.companiesRepo.find({
+      where: { status: 'approved' as any },
+    });
   }
 
   findOne(id: number) {

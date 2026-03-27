@@ -1,5 +1,6 @@
 page {
   font-size: $u-font-base;
   color: $u-main-color;
-  background-color: $u-bg-color;
+  background: linear-gradient(180deg, var(--theme-bg-gradient-start) 0%, var(--theme-bg-gradient-end) 100%);
+  min-height: 100vh;
 }

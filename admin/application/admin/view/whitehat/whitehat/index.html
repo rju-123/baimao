@@ -18,16 +18,3 @@
         </div>
     </div>
 </div>
-
-<script type="text/javascript">
-    require.config({
-        paths: {
-            'backend/whitehat/whitehat': '/assets/js/backend/whitehat/whitehat'
-        }
-    });
-    require(['backend', 'table', 'form', 'backend/whitehat/whitehat'], function (Backend, Table, Form, Controller) {
-        if (Controller && typeof Controller.index === 'function') {
-            Controller.index();
-        }
-    });
-</script>

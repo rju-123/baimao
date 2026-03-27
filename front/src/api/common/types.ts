@@ -12,8 +12,7 @@ export interface UploadRes {
 }
 
 export interface SendCodeReq {
-  phone: number;
-  code: number;
+  phone: string;
 }
 
 export interface SendCodeRes {

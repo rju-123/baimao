@@ -39,6 +39,7 @@
 import { CompanyApi, UserApi } from '@/api';
 import useUserStore from '@/store/modules/user';
 import { toast, route } from '@/utils/uni-helpers';
+import { getToken, setToken } from '@/utils/auth';
 
 const userStore = useUserStore();
 
@@ -49,6 +50,10 @@ const form = reactive<CompanyApi.CreateCompanyDto>({
   contactName: '',
   contactPhone: '',
 });
+
+function normalizeCompanyName(name: string): string {
+  return String(name || '').trim().toLowerCase();
+}
 
 async function submit() {
   if (!form.name) {
@@ -75,6 +80,45 @@ async function submit() {
     return;
   }
   try {
+    // 若同名公司已存在：不重复创建，直接提示并绑定到该公司
+    const inputName = normalizeCompanyName(form.name);
+    if (inputName) {
+      try {
+        const exists = await CompanyApi.listCompanies();
+        const found = (Array.isArray(exists) ? exists : []).find(c => normalizeCompanyName(c.name) === inputName);
+        if (found?.id) {
+          toast('该公司已创建，请返回选择该公司', 'none');
+
+          const userId = Number(userStore.user_id);
+          if (userId) {
+            try {
+              await UserApi.updateCompany(userId, found.id);
+            } catch {
+              console.warn('update user company failed after company exists');
+            }
+          }
+
+          userStore.setInfo({
+            companyId: found.id,
+            companyName: found.name,
+          });
+
+          if (!getToken())
+            setToken('quick-login');
+
+          setTimeout(() => {
+            route({
+              type: 'switchTab',
+              url: '/pages/sales/order/index',
+            });
+          }, 300);
+          return;
+        }
+      } catch {
+        // ignore: 拉取公司列表失败时继续走创建流程
+      }
+    }
+
     const created = await CompanyApi.createCompany(form);
     toast('公司已创建', 'success');
 
@@ -82,20 +126,25 @@ async function submit() {
     if (userId && created?.id) {
       try {
         await UserApi.updateCompany(userId, created.id);
-        userStore.setInfo({
-          companyId: created.id,
-          companyName: created.name,
-        });
       }
       catch {
         // 如果更新用户公司失败，不阻塞后续跳转
         console.warn('update user company failed after create company');
       }
+      // 无论后端同步是否成功，都先在前端落一份公司信息
+      userStore.setInfo({
+        companyId: created.id,
+        companyName: created.name,
+      });
     }
+
+    // 兜底：确保跳转到 TabBar 页面时通过权限拦截（permission 依赖 admin-token）
+    if (!getToken())
+      setToken('quick-login');
 
     setTimeout(() => {
       route({
-        type: 'redirectTo',
+        type: 'switchTab',
         url: '/pages/sales/order/index',
       });
     }, 400);
@@ -108,28 +157,31 @@ async function submit() {
 
 <style scoped lang="scss">
 .page {
-  @apply min-h-screen px-40rpx pt-40rpx pb-40rpx;
-  background: #f7f8fa;
+  @apply min-h-screen px-64rpx pt-48rpx pb-48rpx;
+  background: linear-gradient(180deg, var(--theme-bg-gradient-start) 0%, var(--theme-bg-gradient-end) 100%);
 }
 
 .form {
-  @apply px-24rpx pt-24rpx pb-16rpx mb-40rpx rounded-24rpx;
+  @apply px-40rpx pt-32rpx pb-24rpx mb-48rpx;
+  border-radius: var(--theme-card-radius);
   background: #ffffff;
+  box-shadow: var(--theme-card-shadow);
 }
 
 .label {
-  @apply mt-16rpx mb-8rpx text-26rpx;
-  color: #1b233b;
+  @apply mt-20rpx mb-10rpx text-26rpx;
+  color: var(--theme-text-title);
 }
 
 .bottom-bar {
-  @apply mt-20rpx;
+  @apply mt-24rpx;
 }
 
 .submit-btn {
-  @apply w-full py-20rpx rounded-full text-30rpx border-none;
+  @apply w-full py-24rpx text-30rpx border-none;
+  border-radius: var(--theme-btn-radius);
   color: #ffffff;
-  background-image: linear-gradient(90deg, #0A7AFF, #21d59d);
+  background: #007AFF;
 
   &::after {
     @apply border-none;

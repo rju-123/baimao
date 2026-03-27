@@ -4,8 +4,9 @@
       <view class="tabs-wrapper">
         <nut-tabs v-model="activeTab" type="smile">
           <nut-tabpane title="全部" pane-key="all" />
-          <nut-tabpane title="产品" pane-key="product" />
-          <nut-tabpane title="服务" pane-key="service" />
+          <nut-tabpane title="红队检测" pane-key="redteam" />
+          <nut-tabpane title="渗透测试" pane-key="pentest" />
+          <nut-tabpane title="其他产品" pane-key="other" />
         </nut-tabs>
       </view>
     </view>
@@ -18,7 +19,7 @@
             v-model="keyword"
             class="search-input"
             type="text"
-            placeholder="搜索产品或服务"
+            placeholder="搜索产品"
             confirm-type="search"
           />
         </view>
@@ -30,14 +31,22 @@
           :key="item.id"
           class="card"
         >
-          <view class="card-inner">
+          <view class="card-inner" :class="{ 'card-inner-soldout': isSoldOut(item) }">
             <view class="card-header">
               <view class="card-title">
                 {{ item.name }}
               </view>
-              <button class="card-btn" @tap="goDetail(item)">
-                立即下单
-              </button>
+              <view v-if="typeLabel(item.type)" class="type-tag" :class="`type-${item.type}`">
+                {{ typeLabel(item.type) }}
+              </view>
+              <view class="card-actions">
+                <view v-if="isSoldOut(item)" class="soldout-tag">
+                  已售罄
+                </view>
+                <button class="card-btn" :class="{ disabled: isSoldOut(item) }" @tap="goDetail(item)">
+                  {{ isSoldOut(item) ? '不可下单' : '立即下单' }}
+                </button>
+              </view>
             </view>
             <view class="card-brief">
               {{ item.brief }}
@@ -74,15 +83,21 @@ import { toast, route } from '@/utils/uni-helpers';
 
 const products = ref<ProductApi.Product[]>([]);
 const loading = ref(false);
-const activeTab = ref<'all' | 'service' | 'product'>('all');
+const activeTab = ref<'all' | 'redteam' | 'pentest' | 'other'>('all');
 const keyword = ref('');
+
+function typeLabel(type: string | null | undefined): string {
+  const t = String(type || '').trim();
+  if (t === 'redteam') return '红队检测';
+  if (t === 'pentest') return '渗透测试';
+  if (t === 'other') return '其他产品';
+  return '';
+}
 
 const filteredProducts = computed(() => {
   let list = Array.isArray(products.value) ? products.value : [];
-  if (activeTab.value === 'service')
-    list = list.filter(item => item.type === 'service');
-  else if (activeTab.value === 'product')
-    list = list.filter(item => item.type === 'product');
+  if (activeTab.value !== 'all')
+    list = list.filter(item => item.type === activeTab.value);
   return list;
 });
 
@@ -101,6 +116,11 @@ function formatPrice(val: number | string | null | undefined): string {
   return Number.isNaN(n) ? '0' : n.toFixed(0);
 }
 
+function isSoldOut(item: ProductApi.Product): boolean {
+  const inventory = Number(item.inventory ?? 0);
+  return inventory <= 0;
+}
+
 async function fetchProducts() {
   loading.value = true;
   try {
@@ -117,6 +137,10 @@ async function fetchProducts() {
 }
 
 function goDetail(item: ProductApi.Product) {
+  if (isSoldOut(item)) {
+    toast('当前产品已售罄，暂不可下单');
+    return;
+  }
   route({
     type: 'navigateTo',
     url: `/pages/sales/product-detail/index?id=${item.id}`,
@@ -136,7 +160,7 @@ onShow(() => {
 <style scoped lang="scss">
 .page {
   min-height: 100vh;
-  background-color: #f7f8fa;
+  background: linear-gradient(180deg, var(--theme-bg-gradient-start) 0%, var(--theme-bg-gradient-end) 100%);
   display: flex;
   flex-direction: column;
 }
@@ -147,7 +171,7 @@ onShow(() => {
 }
 
 .tabs-wrapper {
-  padding: 10rpx 24rpx 8rpx;
+  padding: 10rpx 32rpx 8rpx;
 }
 
 /* 隐藏 nut-tabs 默认的内容区域，只保留标签头部，去掉下面那块白条 */
@@ -163,29 +187,27 @@ onShow(() => {
   flex: 1;
   display: flex;
   flex-direction: column;
-  /* 去掉顶部内边距，让搜索框紧贴标签区域下方 */
-  padding: 0 24rpx 24rpx;
+  padding: 0 32rpx 32rpx;
   box-sizing: border-box;
 }
 
 .search-wrapper {
-  /* 删除与标签之间的额外留白 */
   margin-top: 0;
-  margin-bottom: 16rpx;
+  margin-bottom: 20rpx;
 }
 
 .search-box {
   display: flex;
   align-items: center;
-  padding: 26rpx 20rpx;
-  border-radius: 9999rpx;
+  padding: 28rpx 24rpx;
+  border-radius: 24rpx;
   background: #f2f2f7;
 }
 
 .search-icon {
   margin-right: 12rpx;
   font-size: 26rpx;
-  color: #8e8e93;
+  color: var(--theme-text-subtitle);
 }
 
 .search-input {
@@ -203,12 +225,15 @@ onShow(() => {
 }
 
 .card-inner {
-  padding: 24rpx 24rpx 28rpx;
-  border-radius: 16rpx;
+  padding: 28rpx 32rpx 32rpx;
+  border-radius: var(--theme-card-radius);
   box-sizing: border-box;
   background-color: #ffffff;
-  border: 2rpx solid #c4c8d6;
-  box-shadow: 0 4rpx 8rpx rgba(0, 0, 0, 0.03);
+  box-shadow: var(--theme-card-shadow);
+}
+
+.card-inner-soldout {
+  opacity: 0.6;
 }
 
 .card-header {
@@ -219,6 +244,12 @@ onShow(() => {
   gap: 20rpx;
 }
 
+.card-actions {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
 .card-title {
   flex: 1;
   min-width: 0;
@@ -227,7 +258,32 @@ onShow(() => {
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-  color: #1b233b;
+  color: var(--theme-text-title);
+}
+
+.type-tag {
+  flex-shrink: 0;
+  padding: 4rpx 12rpx;
+  border-radius: 9999rpx;
+  font-size: 22rpx;
+  font-weight: 500;
+  color: #374151;
+  background: #f3f4f6;
+}
+
+.type-redteam {
+  color: #1d4ed8;
+  background: rgba(29, 78, 216, 0.12);
+}
+
+.type-pentest {
+  color: #b45309;
+  background: rgba(180, 83, 9, 0.12);
+}
+
+.type-other {
+  color: #4b5563;
+  background: rgba(75, 85, 99, 0.12);
 }
 
 .card-btn {
@@ -235,22 +291,35 @@ onShow(() => {
   width: 144rpx;
   margin-right: 16rpx;
   padding: 8rpx 0;
-  border-radius: 9999rpx;
+  border-radius: var(--theme-btn-radius);
   font-size: 24rpx;
   border: none;
   text-align: center;
   color: #ffffff;
-  background-color: #0A7AFF;
+  background-color: #007AFF;
 
   &::after {
     border: none;
   }
 }
 
+.card-btn.disabled {
+  background-color: #9ca3af;
+}
+
+.soldout-tag {
+  flex-shrink: 0;
+  padding: 4rpx 10rpx;
+  border-radius: 9999rpx;
+  font-size: 22rpx;
+  color: #b91c1c;
+  background-color: #fee2e2;
+}
+
 .card-brief {
   margin-top: 4rpx;
   font-size: 26rpx;
-  color: #8e8e93;
+  color: var(--theme-text-subtitle);
 }
 
 .card-price-row {
@@ -262,7 +331,7 @@ onShow(() => {
 .card-origin-price {
   margin-right: 12rpx;
   font-size: 24rpx;
-  color: #8e8e93;
+  color: var(--theme-text-subtitle);
   text-decoration: line-through;
 }
 
@@ -276,7 +345,7 @@ onShow(() => {
   margin-top: 40rpx;
   text-align: center;
   font-size: 26rpx;
-  color: #8e8e93;
+  color: var(--theme-text-subtitle);
 }
 </style>
 

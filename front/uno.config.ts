@@ -69,6 +69,13 @@ export default defineConfig({
       // 边框颜色
       'border-main': 'var(--theme-border-color)',
     },
+    borderRadius: {
+      'card': 'var(--theme-card-radius)',
+      'btn': 'var(--theme-btn-radius)',
+    },
+    boxShadow: {
+      'card': 'var(--theme-card-shadow)',
+    },
   },
   transformers: [
     // 启用指令功能：主要用于支持 @apply、@screen 和 theme() 等 CSS 指令

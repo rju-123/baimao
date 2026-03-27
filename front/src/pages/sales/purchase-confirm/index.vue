@@ -38,33 +38,11 @@
       </view>
     </view>
 
-    <!-- 优惠券 -->
-    <view class="card coupon-card">
-      <view class="field-line coupon-header">
-        <text class="field-label">优惠券</text>
-        <text class="coupon-link" @tap.stop="openCouponSheet">查看全部</text>
-      </view>
-      <view class="coupon-select" @tap="openCouponSheet">
-        <text class="coupon-placeholder">
-          {{ couponText }}
-        </text>
-        <text class="coupon-arrow">›</text>
-      </view>
-    </view>
-
     <!-- 金额汇总 -->
     <view class="card summary-card">
-      <view class="summary-line">
-        <text class="summary-label">产品总额</text>
-        <text class="summary-value">￥{{ productTotal }}</text>
-      </view>
-      <view class="summary-line">
-        <text class="summary-label">优惠金额</text>
-        <text class="summary-value">-￥{{ couponDiscount }}</text>
-      </view>
       <view class="summary-line summary-total">
-        <text class="summary-label">实付金额</text>
-        <text class="summary-pay">￥{{ payAmount }}</text>
+        <text class="summary-label">产品总额</text>
+        <text class="summary-pay">￥{{ productTotal }}</text>
       </view>
     </view>
 
@@ -75,42 +53,6 @@
       </button>
     </view>
 
-    <nut-popup v-model:visible="couponVisible" position="bottom" round>
-      <view class="coupon-sheet">
-        <view class="coupon-sheet-title">
-          选择优惠券
-        </view>
-        <scroll-view scroll-y class="coupon-list">
-          <view
-            v-for="item in coupons"
-            :key="item.id"
-            class="coupon-item"
-            :class="{ disabled: !isCouponUsable(item), active: selectedCouponId === item.id }"
-            @tap="selectCoupon(item)"
-          >
-            <view class="coupon-main">
-              <view class="coupon-amount">
-                ￥{{ item.value }}
-              </view>
-              <view class="coupon-info">
-                <view class="coupon-name">
-                  {{ item.name }}
-                </view>
-                <view class="coupon-limit">
-                  满 {{ item.minAmount }} 可用
-                </view>
-              </view>
-            </view>
-            <view class="coupon-tag">
-              {{ item.type === 'service' ? '服务券' : item.type === 'product' ? '产品券' : '通用券' }}
-            </view>
-          </view>
-        </scroll-view>
-        <button class="coupon-confirm" @tap="closeCouponSheet">
-          完成
-        </button>
-      </view>
-    </nut-popup>
   </view>
   <view v-else class="page loading">
     <view class="theme-text-tips">
@@ -122,7 +64,6 @@
 <script setup lang="ts">
 import { onLoad } from '@dcloudio/uni-app';
 import { ProductApi } from '@/api';
-import { get, post } from '@/utils/request';
 import { toast } from '@/utils/uni-helpers';
 import useUserStore from '@/store/modules/user';
 
@@ -132,19 +73,6 @@ const product = ref<ProductApi.Product | null>(null);
 const productId = ref<number | null>(null);
 const quantity = ref(1);
 const CART_STORAGE_KEY = 'sales_cart_items';
-
-interface Coupon {
-  id: number;
-  name: string;
-  type: string;
-  value: number;
-  minAmount: number;
-}
-
-const coupons = ref<Coupon[]>([]);
-const selectedCouponId = ref<number | null>(null);
-const couponDiscount = ref(0);
-const couponVisible = ref(false);
 
 /** 兼容后端 decimal/库存可能返回字符串 */
 function formatPrice(val: number | string | null | undefined): string {
@@ -175,11 +103,6 @@ const productTotal = computed(() => {
   return qty * price;
 });
 
-const payAmount = computed(() => {
-  const total = productTotal.value;
-  const discount = Math.min(couponDiscount.value, total);
-  return total - discount;
-});
 
 async function fetchProduct(id: number) {
   try {
@@ -189,20 +112,6 @@ async function fetchProduct(id: number) {
   catch {
     toast('加载产品失败');
     product.value = null;
-  }
-}
-
-async function fetchCoupons() {
-  const userId = Number(userStore.user_id || 0);
-  if (!userId)
-    return;
-  try {
-    const list = await get<Coupon[]>(`/coupons?userId=${encodeURIComponent(String(userId))}&status=available`);
-    coupons.value = Array.isArray(list) ? list : [];
-  }
-  catch (e) {
-    console.warn('load coupons failed', e);
-    coupons.value = [];
   }
 }
 
@@ -217,42 +126,6 @@ function increase() {
     return;
   quantity.value += 1;
 }
-
-function openCouponSheet() {
-  if (!coupons.value.length) {
-    toast('当前暂无可用优惠券');
-    return;
-  }
-  couponVisible.value = true;
-}
-
-function closeCouponSheet() {
-  couponVisible.value = false;
-}
-
-function isCouponUsable(item: Coupon) {
-  return productTotal.value >= item.minAmount;
-}
-
-function selectCoupon(item: Coupon) {
-  if (!isCouponUsable(item)) {
-    toast('未满足使用门槛');
-    return;
-  }
-  selectedCouponId.value = item.id;
-  couponDiscount.value = item.value;
-}
-
-const couponText = computed(() => {
-  if (!coupons.value.length)
-    return '暂无可用优惠券';
-  if (selectedCouponId.value) {
-    const c = coupons.value.find(i => i.id === selectedCouponId.value);
-    if (c)
-      return `已选：立减￥${c.value}`;
-  }
-  return '选择优惠券';
-});
 
 function loadCart(): any[] {
   try {
@@ -269,21 +142,8 @@ function saveCart(list: any[]) {
   uni.setStorageSync(CART_STORAGE_KEY, JSON.stringify(list || []));
 }
 
-async function lockCouponIfNeeded(couponId: number | null) {
-  if (!couponId)
-    return;
-  // 购物车锁券：后端将实现 /coupons/:id/lock
-  await post(`/coupons/${couponId}/lock`, {
-    data: {
-      userId: Number(userStore.user_id || 0),
-      productId: productId.value,
-    },
-  });
-}
-
 async function addToCart() {
   const userId = Number(userStore.user_id);
-  const companyId = userStore.companyId ?? undefined;
   if (!userId) {
     toast('请先登录');
     return;
@@ -298,24 +158,28 @@ async function addToCart() {
   }
   const qty = quantity.value > 0 ? quantity.value : 1;
   try {
-    await lockCouponIfNeeded(selectedCouponId.value);
-
     const cart = loadCart();
     const idx = cart.findIndex((i: any) => Number(i.productId) === Number(productId.value));
-    const coupon = selectedCouponId.value
-      ? coupons.value.find(i => i.id === selectedCouponId.value) || null
-      : null;
+    const existingQty = idx >= 0 ? Math.max(0, Number(cart[idx].quantity || 0)) : 0;
+    // 加入前刷新一次最新库存，避免分次加入超出库存
+    const latest = await ProductApi.getProduct(Number(productId.value));
+    const latestInventory = Number(latest?.inventory ?? 0);
+    if (latestInventory <= 0) {
+      toast('当前产品已售罄，无法加入购物车');
+      return;
+    }
+    if (existingQty + qty > latestInventory) {
+      toast(`加入失败，购物车已有 ${existingQty} 件，当前库存仅剩 ${latestInventory} 件`);
+      return;
+    }
 
     const item = {
       productId: productId.value,
-      productName: product.value?.name || '',
-      unitPrice: Number(unitPrice.value || '0'),
+      productName: latest?.name || product.value?.name || '',
+      unitPrice: Number((latest?.discountPrice ?? latest?.price ?? unitPrice.value) || '0'),
       quantity: qty,
-      couponId: selectedCouponId.value,
-      couponName: coupon?.name || '',
-      couponValue: coupon?.value || 0,
-      couponType: coupon?.type || '',
-      couponMinAmount: coupon?.minAmount || 0,
+      inventory: latestInventory,
+      soldOut: latestInventory <= 0,
     };
 
     if (idx >= 0) {
@@ -325,12 +189,7 @@ async function addToCart() {
     }
     saveCart(cart);
 
-    toast('已加入购物车', 'success');
-    setTimeout(() => {
-      uni.switchTab({
-        url: '/pages/sales/cart/index',
-      });
-    }, 500);
+    toast('产品已加入购物车', 'success');
   }
   catch (err: any) {
     const message = err?.message || err?.msg || err?.error || '下单失败，请稍后重试';
@@ -349,7 +208,6 @@ onLoad((options: any) => {
   if (initialQty > 0)
     quantity.value = initialQty;
   fetchProduct(id);
-  fetchCoupons();
 });
 </script>
 
@@ -358,15 +216,15 @@ onLoad((options: any) => {
   min-height: 100vh;
   padding: 32rpx 32rpx 120rpx;
   box-sizing: border-box;
-  background-color: #f7f8fa;
+  background: linear-gradient(180deg, var(--theme-bg-gradient-start) 0%, var(--theme-bg-gradient-end) 100%);
 }
 
 .card {
-  padding: 28rpx 32rpx 24rpx;
-  margin-bottom: 24rpx;
-  border-radius: 24rpx;
+  padding: 32rpx 40rpx 28rpx;
+  margin-bottom: 28rpx;
+  border-radius: var(--theme-card-radius);
   background-color: #ffffff;
-  box-shadow: 0 10rpx 30rpx rgba(0, 0, 0, 0.04);
+  box-shadow: var(--theme-card-shadow);
 }
 
 .card-main {
@@ -382,12 +240,12 @@ onLoad((options: any) => {
 
 .field-label {
   font-size: 26rpx;
-  color: #1b233b;
+  color: var(--theme-text-title);
 }
 
 .field-value {
   font-size: 26rpx;
-  color: #666666;
+  color: var(--theme-text-subtitle);
 }
 
 .field-name {
@@ -407,8 +265,8 @@ onLoad((options: any) => {
 .qty-stepper {
   display: flex;
   align-items: center;
-  border-radius: 9999rpx;
-  border: 1rpx solid #e5e6eb;
+  border-radius: var(--theme-btn-radius);
+  border: 1rpx solid #E0E0E0;
   overflow: hidden;
 }
 
@@ -420,7 +278,7 @@ onLoad((options: any) => {
   font-size: 32rpx;
   border: none;
   background-color: #f5f6fa;
-  color: #1b233b;
+  color: var(--theme-text-title);
 }
 
 .step-btn:disabled {
@@ -432,7 +290,7 @@ onLoad((options: any) => {
   padding: 0 12rpx;
   text-align: center;
   font-size: 28rpx;
-  color: #1b233b;
+  color: var(--theme-text-title);
   background-color: #ffffff;
 }
 
@@ -440,39 +298,6 @@ onLoad((options: any) => {
   font-size: 30rpx;
   font-weight: 600;
   color: #ff4d4f;
-}
-
-.coupon-card {
-  margin-bottom: 24rpx;
-}
-
-.coupon-header {
-  margin-bottom: 12rpx;
-}
-
-.coupon-link {
-  font-size: 24rpx;
-  color: #0A7AFF;
-}
-
-.coupon-select {
-  margin-top: 4rpx;
-  padding: 18rpx 20rpx;
-  border-radius: 16rpx;
-  background-color: #f5f6fa;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.coupon-placeholder {
-  font-size: 26rpx;
-  color: #666666;
-}
-
-.coupon-arrow {
-  font-size: 30rpx;
-  color: #c0c4cc;
 }
 
 .summary-card {
@@ -488,12 +313,12 @@ onLoad((options: any) => {
 
 .summary-label {
   font-size: 26rpx;
-  color: #666666;
+  color: var(--theme-text-subtitle);
 }
 
 .summary-value {
   font-size: 26rpx;
-  color: #1b233b;
+  color: var(--theme-text-title);
 }
 
 .summary-total {
@@ -513,105 +338,25 @@ onLoad((options: any) => {
   left: 0;
   right: 0;
   bottom: 0;
-  padding: 12rpx 32rpx 32rpx;
+  padding: 20rpx 32rpx 40rpx;
   box-sizing: border-box;
-  background-color: rgba(247, 248, 250, 0.98);
-  box-shadow: 0 -4rpx 12rpx rgba(15, 23, 42, 0.04);
+  background-color: rgba(248, 248, 248, 0.98);
+  box-shadow: 0 -10rpx 30rpx rgba(0, 122, 255, 0.06);
 }
 
 .submit-btn {
   width: 100%;
-  padding: 20rpx 0;
-  border-radius: 9999rpx;
+  padding: 24rpx 0;
+  border-radius: var(--theme-btn-radius);
   border: none;
   font-size: 30rpx;
   text-align: center;
   color: #ffffff;
-  background-color: #0A7AFF;
+  background-color: #007AFF;
 }
 
 .submit-btn:active {
   opacity: 0.9;
-}
-
-.coupon-sheet {
-  padding: 24rpx 24rpx 32rpx;
-}
-
-.coupon-sheet-title {
-  margin-bottom: 16rpx;
-  font-size: 28rpx;
-  font-weight: 500;
-  text-align: center;
-  color: #1b233b;
-}
-
-.coupon-list {
-  max-height: 520rpx;
-}
-
-.coupon-item {
-  padding: 16rpx 20rpx;
-  margin-bottom: 12rpx;
-  border-radius: 16rpx;
-  background-color: #f5f6fa;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.coupon-item.disabled {
-  opacity: 0.4;
-}
-
-.coupon-item.active {
-  border: 2rpx solid #0A7AFF;
-  background-color: #eef5ff;
-}
-
-.coupon-main {
-  display: flex;
-  align-items: center;
-  column-gap: 16rpx;
-}
-
-.coupon-amount {
-  font-size: 30rpx;
-  font-weight: 600;
-  color: #ff4d4f;
-}
-
-.coupon-info {
-  display: flex;
-  flex-direction: column;
-  row-gap: 4rpx;
-}
-
-.coupon-name {
-  font-size: 26rpx;
-  color: #1b233b;
-}
-
-.coupon-limit {
-  font-size: 24rpx;
-  color: #999999;
-}
-
-.coupon-tag {
-  font-size: 24rpx;
-  color: #0A7AFF;
-}
-
-.coupon-confirm {
-  margin-top: 16rpx;
-  width: 100%;
-  padding: 18rpx 0;
-  border-radius: 9999rpx;
-  border: none;
-  font-size: 28rpx;
-  text-align: center;
-  color: #ffffff;
-  background-color: #0A7AFF;
 }
 
 .loading {

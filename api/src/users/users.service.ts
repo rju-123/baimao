@@ -20,6 +20,10 @@ export class UsersService {
     const sales = await this.salesService.findByPhone(user.phone);
     if (sales) {
       user.isAdmin = !!sales.isAdmin;
+      // 用户表无公司时，以销售表为准，确保能查看后台分配的优惠券
+      if (user.companyId == null || user.companyId === 0) {
+        user.companyId = sales.companyId ?? null;
+      }
     }
     return user;
   }
@@ -73,7 +77,8 @@ export class UsersService {
     if (name && name.trim())
       user.name = name.trim();
     const saved = await this.usersRepo.save(user);
-    await this.salesService.upsertByPhone(user.phone, name ?? user.name, companyId);
+    // 默认将当前用户设为该公司的管理员
+    await this.salesService.upsertByPhone(user.phone, name ?? user.name, companyId, true);
     return saved;
   }
 }

@@ -19,19 +19,3 @@
         </div>
     </div>
 </div>
-
-<script type="text/javascript">
-    // 覆盖订单模块的 RequireJS 路径到本地，避免从 CDN 加载 404
-    require.config({
-        paths: {
-            'backend/order/order': '/assets/js/backend/order/order'
-        }
-    });
-
-    // 兜底初始化，确保订单列表页表格正常渲染
-    require(['backend', 'table', 'form', 'backend/order/order'], function (Backend, Table, Form, Controller) {
-        if (Controller && typeof Controller.index === 'function') {
-            Controller.index();
-        }
-    });
-</script>

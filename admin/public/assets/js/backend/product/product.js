@@ -26,7 +26,15 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form'], function ($, undefin
                         {checkbox: true},
                         {field: 'id', title: __('Id'), sortable: true},
                         {field: 'name', title: __('Name'), operate: 'LIKE'},
-                        {field: 'type', title: __('Type'), searchList: {product: __('Product'), service: __('Service')}, formatter: Table.api.formatter.normal},
+                        {
+                            field: 'type',
+                            title: __('Type'),
+                            searchList: {redteam: '红队检测', pentest: '渗透测试', other: '其他产品'},
+                            formatter: function (value) {
+                                var map = {redteam: '红队检测', pentest: '渗透测试', other: '其他产品'};
+                                return map[value] || value || '-';
+                            }
+                        },
                         // 去掉“分类”字段，改为显示客户字段
                         {field: 'customer', title: __('Customer'), operate: 'LIKE'},
                         {field: 'brief', title: __('Brief'), operate: 'LIKE'},

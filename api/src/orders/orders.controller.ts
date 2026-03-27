@@ -3,10 +3,14 @@ import { plainToInstance } from 'class-transformer';
 import { validateOrReject } from 'class-validator';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { OrdersService } from './orders.service';
+import { ContractService } from '../contract/contract.service';
 
 @Controller('orders')
 export class OrdersController {
-  constructor(private readonly ordersService: OrdersService) {}
+  constructor(
+    private readonly ordersService: OrdersService,
+    private readonly contractService: ContractService,
+  ) {}
 
   @Post()
   async create(@Body() body: any) {
@@ -31,6 +35,25 @@ export class OrdersController {
       message: 'OK',
       result: data,
     };
+  }
+
+  @Post(':id/generate-contract')
+  async generateContract(@Param('id') id: string) {
+    try {
+      const contractUrl = await this.contractService.generateContract(Number(id));
+      return {
+        code: 200,
+        message: '合同生成成功',
+        result: { contractUrl },
+      };
+    }
+    catch (e: any) {
+      return {
+        code: 400,
+        message: e?.message || '合同生成失败',
+        result: null,
+      };
+    }
   }
 
   @Get(':id')

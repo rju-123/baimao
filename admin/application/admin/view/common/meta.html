@@ -17,6 +17,12 @@
 
 <script type="text/javascript">
     var require = {
-        config:  {:json_encode($config)}
+        // 将模板输出包进字符串，避免编辑器把模板语法当 JS 报错
+        config: JSON.parse('{$config|json_encode}')
     };
+    // 自定义：提供 NestJS API 基础地址，供后台 JS 预览小程序上传的图片等使用
+    require.config = require.config || {};
+    require.config.site = require.config.site || {};
+    require.config.site.api_base_url = require.config.site.api_base_url
+        || JSON.parse('{$Think.config.site.api_base_url|default=""|json_encode}');
 </script>

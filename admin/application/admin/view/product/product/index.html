@@ -19,20 +19,3 @@
         </div>
     </div>
 </div>
-
-<script type="text/javascript">
-    // 覆盖产品模块的 RequireJS 路径到本地，避免从 CDN 加载 404
-    require.config({
-        paths: {
-            // 模块 ID -> 本地 JS 路径（去掉 .js 后缀）
-            'backend/product/product': '/assets/js/backend/product/product'
-        }
-    });
-
-    // 兜底初始化，确保产品列表页表格正常渲染
-    require(['backend', 'table', 'form', 'backend/product/product'], function (Backend, Table, Form, Controller) {
-        if (Controller && typeof Controller.index === 'function') {
-            Controller.index();
-        }
-    });
-</script>

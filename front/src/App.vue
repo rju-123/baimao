@@ -28,4 +28,5 @@ onHide(() => {
 <style lang="scss">
 /* 每个页面公共 css，NutUI 通过 easycom 按需引入 */
 @import '@/static/styles/common.scss';
+@import '@/static/styles/nut-override.scss';
 </style>

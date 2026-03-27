@@ -175,6 +175,49 @@
 
 ### 订单（下单 / 我的订单 / 订单详情）
 
+#### LibreOffice 安装（合同 PDF 生成）
+
+订单创建成功后会**自动生成** PDF 合同（依赖本机 LibreOffice）。若未安装，订单仍可创建，但 `contract_url` 为空，可查看服务日志中的「合同自动生成失败」。
+
+**Windows**
+
+1. 打开 [LibreOffice 官网](https://www.libreoffice.org/download/download/) 下载 Windows 安装包并安装（默认路径如 `C:\Program Files\LibreOffice`）。
+2. 将 LibreOffice 加入 **PATH**，任选其一：
+   - 安装时勾选「将 LibreOffice 添加到系统 PATH」类选项；或
+   - 手动在「环境变量」→「系统变量」→ `Path` 中新增：`C:\Program Files\LibreOffice\program`（以实际安装目录为准）。
+3. 新开终端执行 `where soffice` 或 `soffice --version`，能输出版本即表示可用。
+4. **重启**运行 NestJS 的终端/IDE，再启动 `npm run start:dev`。
+
+**macOS**
+
+```bash
+brew install --cask libreoffice
+# 或从官网下载 .dmg 安装后，确保 /Applications/LibreOffice.app/Contents/MacOS 在 PATH（部分环境需手动配置）
+```
+
+**Linux（Debian/Ubuntu）**
+
+```bash
+sudo apt update && sudo apt install -y libreoffice
+```
+
+验证：`soffice --version`。
+
+#### 合同 Word 模板（按产品类型）
+
+模板目录：`api/templates/`（与 `process.cwd()` 下 `templates/` 一致）。
+
+| 模板文件 | 使用场景 |
+| --- | --- |
+| `contract_v1.docx` | 红队检测（`redteam`）、渗透测试（`pentest`）、历史类型 `product` / `service`、无法识别类型时的兜底；**合并订单**（购物车一次下单，汇总名中含 `，` 或 `,`，或 `product_id = 0`） |
+| `contract_other.docx` | 其他产品（产品表 `type = other`） |
+
+> 合并单在业务上统一走「红队/渗透」同一套模板，与合并里是否包含「其他产品」无关。
+
+若生成「其他产品」合同时报错提示缺少模板，请将对应 `.docx` 放到 `api/templates/contract_other.docx`（占位符字段需与 `contract_v1.docx` 一致，便于同一套 `ContractOrderData` 填充）。
+
+---
+
 #### `POST /orders`
 
 - **描述**：创建订单。前端在确认订单页提交。
@@ -199,6 +242,7 @@
     - `discountAmount = couponDiscount`（如果传入）
     - `payAmount = amount - discountAmount`
   - 初始状态：`status = "pending_contract"`（待签约）。
+  - 创建成功后后台会尝试根据模板生成 PDF 合同并写入 `contract_url`（需已安装 LibreOffice，失败不影响订单创建）。
 
 #### `GET /orders`
 
@@ -210,6 +254,28 @@
 #### `GET /orders/:id`
 
 - **描述**：订单详情页使用。
+
+#### `POST /orders/:id/generate-contract`
+
+- **描述**：根据模板生成或**重新生成** PDF 合同，并更新订单的 `contract_url`、`contract_status`（订单创建时已自动生成一次，此处用于补生成或覆盖）。
+- **路径参数**：`id` 订单 ID。
+- **前置条件**：订单须存在（任意状态均可调用以重试生成）。
+- **响应示例**
+
+```json
+{
+  "code": 200,
+  "message": "合同生成成功",
+  "result": {
+    "contractUrl": "uploads/contracts/123_1709123456.pdf"
+  }
+}
+```
+
+- **数据库关联**：生成成功后，订单表的 `contract_url` 存储相对路径（如 `uploads/contracts/123_1709123456.pdf`），`contract_status` 设为 `generated`。合同文件可通过 `http://API_BASE/uploads/contracts/xxx.pdf` 访问。
+
+- **依赖说明**：详见上文「LibreOffice 安装（合同 PDF 生成）」。
+- **模板**：`api/templates/contract_v1.docx`，占位符包括 `{orderNo}`、`{productName}`、`{quantity}`、`{payAmount}`、`{companyName}`、`{companyAddress}`、`{companyPhone}`。
 
 ---
 

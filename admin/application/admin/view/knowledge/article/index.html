@@ -17,16 +17,3 @@
     </div>
 </div>
 
-<script type="text/javascript">
-    require.config({
-        paths: {
-            'backend/knowledge/article': '/assets/js/backend/knowledge/article'
-        }
-    });
-    require(['backend', 'table', 'form', 'backend/knowledge/article'], function (Backend, Table, Form, Controller) {
-        if (Controller && typeof Controller.index === 'function') {
-            Controller.index();
-        }
-    });
-</script>
-

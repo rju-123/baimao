@@ -1,34 +1,41 @@
 <template>
   <view class="min-h-screen theme-bg p-20rpx">
-    <view class="theme-text-content mb-20rpx text-32rpx font-medium">
-      请选择公司
+    <view class="theme-text-content mb-8rpx text-32rpx font-medium text-center">
+      个人资料填写
     </view>
 
-    <!-- 销售人员姓名 -->
-    <view class="mb-24rpx">
-      <view class="mb-12rpx text-26rpx theme-text-label">
+    <view class="company-panel">
+      <!-- 销售人员姓名 -->
+      <view class="company-input-block">
+        <view class="mb-10rpx text-28rpx theme-text-label px-20rpx">
         姓名
       </view>
       <nut-input
         v-model="salesName"
         placeholder="请输入您的姓名"
-        class="rounded-2xl px-20rpx bg-white"
+        class="rounded-2xl px-20rpx bg-white w-full"
       />
+      </view>
+
+      <view class="mb-10rpx text-28rpx theme-text-label px-20rpx">
+        所属公司
+      </view>
+
+      <nut-cellgroup class="company-cellgroup">
+        <nut-cell
+          v-for="item in companies"
+          :key="item.id"
+          :title="item.name"
+          :desc="item.address"
+          is-link
+          @click="selectCompany(item)"
+        >
+          <template #icon>
+            <nut-icon name="shop" class="mr-10rpx" />
+          </template>
+        </nut-cell>
+      </nut-cellgroup>
     </view>
-    <nut-cellgroup>
-      <nut-cell
-        v-for="item in companies"
-        :key="item.id"
-        :title="item.name"
-        :desc="item.address"
-        is-link
-        @click="selectCompany(item)"
-      >
-        <template #icon>
-          <nut-icon name="shop" class="mr-10rpx" />
-        </template>
-      </nut-cell>
-    </nut-cellgroup>
     <view v-if="!loading && companies.length === 0" class="mt-40rpx text-center theme-text-tips">
       暂无公司数据
     </view>
@@ -140,20 +147,85 @@ function goAddCompany() {
   });
 }
 
-onLoad(() => {
-  fetchCompanies();
+onLoad((options) => {
+  if (options?.companyId && userStore.user_name) {
+    salesName.value = userStore.user_name;
+  }
+  fetchCompanies().then(() => {
+    const companyId = options?.companyId ? Number(options.companyId) : 0;
+    if (companyId && companies.value.length > 0) {
+      const found = companies.value.find(c => c.id === companyId);
+      if (found && salesName.value?.trim()) {
+        selectCompany(found);
+      }
+    }
+  });
 });
 </script>
 
 <style scoped lang="scss">
+.company-panel {
+  background: #f5f5f5;
+  border-radius: var(--theme-card-radius);
+  padding: 12rpx 20rpx 20rpx;
+}
+
+.company-input-block {
+  margin-bottom: 12rpx;
+}
+
+.company-cellgroup {
+  background: transparent;
+}
+
+:deep(.nut-input) {
+  width: 100%;
+  height: 96rpx;
+  min-height: 96rpx;
+  font-size: 28rpx;
+  border-radius: 12rpx;
+  box-sizing: border-box;
+}
+
+:deep(.nut-input__inner) {
+  height: 96rpx;
+  min-height: 96rpx;
+  padding: 0 24rpx;
+  border-radius: 12rpx;
+}
+
+:deep(.nut-input__input) {
+  font-size: 28rpx;
+  line-height: 1.5;
+}
+
+:deep(.nut-cell) {
+  min-height: 96rpx;
+  height: 96rpx;
+}
+
+:deep(.nut-cell__body) {
+  min-height: 96rpx;
+}
+
+:deep(.nut-cell__title) {
+  font-size: 28rpx;
+}
+
+:deep(.nut-cell__desc) {
+  font-size: 24rpx;
+}
+
 .bottom-bar {
   @apply mt-40rpx;
 }
 
 .add-btn {
-  @apply w-full py-20rpx rounded-full text-30rpx border-none;
-  color: #0A7AFF;
+  @apply w-full py-24rpx text-30rpx;
+  border-radius: var(--theme-btn-radius);
+  color: #007AFF;
   background: #ffffff;
+  border: 1px solid #E0E0E0;
 
   &::after {
     @apply border-none;

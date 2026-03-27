@@ -70,6 +70,27 @@
       "needLogin": true
     },
     {
+      "path": "pages/sales/settings/index",
+      "style": {
+        "navigationBarTitleText": "设置"
+      },
+      "needLogin": true
+    },
+    {
+      "path": "pages/sales/address-management/index",
+      "style": {
+        "navigationBarTitleText": "收货地址"
+      },
+      "needLogin": true
+    },
+    {
+      "path": "pages/sales/coupons/index",
+      "style": {
+        "navigationBarTitleText": "优惠券"
+      },
+      "needLogin": true
+    },
+    {
       "path": "pages/common/verification-login/index",
       "style": {
         "navigationBarTitleText": "手机验证码登录"
@@ -128,8 +149,9 @@
     {
       "path": "pages/sales/purchase-confirm/index",
       "style": {
-        "navigationBarTitleText": "确认下单"
-      }
+        "navigationBarTitleText": "确认购买"
+      },
+      "needLogin": true
     },
     {
       "path": "pages/sales/order-detail/index",
@@ -195,8 +217,8 @@
   ],
   "preloadRule": {},
   "tabBar": {
-    "color": "#1b233b",
-    "selectedColor": "#21d59d",
+    "color": "#666666",
+    "selectedColor": "#007AFF",
     "borderStyle": "black",
     "backgroundColor": "#ffffff",
     "list": [{

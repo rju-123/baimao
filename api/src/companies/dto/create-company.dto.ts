@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString, Length } from 'class-validator';
+import { IsNotEmpty, IsString } from 'class-validator';
 
 export class CreateCompanyDto {
   @IsString()
@@ -6,7 +6,6 @@ export class CreateCompanyDto {
   name: string;
 
   @IsString()
-  @Length(18, 18)
   creditCode: string;
 
   @IsString()

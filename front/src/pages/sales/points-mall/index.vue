@@ -13,7 +13,7 @@
 
     <!-- 商品类型分段控件 -->
     <view class="segment-wrapper">
-      <nut-tabs v-model="activeTab" type="line" color="#0A7AFF">
+      <nut-tabs v-model="activeTab" type="line" color="#007AFF">
         <nut-tabpane title="全部" pane-key="all" />
         <nut-tabpane title="实体商品" pane-key="physical" />
         <nut-tabpane title="虚拟商品" pane-key="virtual" />
@@ -174,17 +174,18 @@ onShow(async () => {
 <style scoped lang="scss">
 .points-page {
   min-height: 100vh;
-  padding: 24rpx;
+  padding: 32rpx;
   box-sizing: border-box;
-  background-color: #f2f2f7;
+  background: linear-gradient(180deg, var(--theme-bg-gradient-start) 0%, var(--theme-bg-gradient-end) 100%);
 }
 
 .points-card {
-  padding: 24rpx 32rpx;
-  border-radius: 24rpx;
-  background: linear-gradient(135deg, #0a7aff, #7b5cff);
+  padding: 32rpx 40rpx;
+  border-radius: var(--theme-card-radius);
+  background: #007AFF;
   color: #ffffff;
-  margin-bottom: 24rpx;
+  margin-bottom: 28rpx;
+  box-shadow: var(--theme-card-shadow);
 }
 
 .points-card-header {
@@ -227,12 +228,13 @@ onShow(async () => {
 
 .goods-card {
   background-color: #ffffff;
-  border-radius: 16rpx;
-  padding: 16rpx;
+  border-radius: var(--theme-card-radius);
+  padding: 20rpx;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
   gap: 8rpx;
+  box-shadow: var(--theme-card-shadow);
 }
 
 .goods-image {
@@ -293,7 +295,7 @@ onShow(async () => {
   }
 
   .tag-physical {
-    background-color: #0a7aff;
+    background-color: #007AFF;
   }
 
   .tag-virtual {

@@ -76,6 +76,11 @@ alwaysApply: true
 - 使用 ESLint 进行代码校验与格式化
 - 禁用 Prettier 进行代码格式化
 
+## 优惠券
+
+- 所有优惠券相关 UI（选择优惠券弹窗、全部优惠券页面、购物车优惠券等）必须统一使用 `CouponApi.listCoupons(userId, status)` 获取数据
+- 禁止直接调用 `get('/coupons?...')`，避免不同入口数据格式或逻辑不一致导致显示异常
+
 ## 其他
 
 - 优先使用现有第三方依赖，避免重新发明轮子

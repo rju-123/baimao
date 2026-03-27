@@ -162,7 +162,19 @@ onLoad((options: Record<string, any>) => {
   const id = Number(options.id || 0);
   if (id) {
     editingId.value = id;
-    // 如果有地址对象通过 eventChannel 传入，可以直接用；否则简单从上个页面列表中带过来
+    // 优先从 storage 读取（地址管理页传入）
+    try {
+      const cached = uni.getStorageSync('sales_edit_address') as AddressItem | null;
+      if (cached && cached.id === id) {
+        fillForm(cached);
+        uni.removeStorageSync('sales_edit_address');
+        return;
+      }
+    }
+    catch (e) {
+      console.warn('getStorage edit address failed', e);
+    }
+    // 兼容微信 eventChannel
     // #ifdef MP-WEIXIN
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
@@ -180,23 +192,24 @@ onLoad((options: Record<string, any>) => {
 <style scoped lang="scss">
 .page {
   min-height: 100vh;
-  padding: 24rpx;
+  padding: 32rpx;
   box-sizing: border-box;
-  background-color: #f5f5f7;
+  background: linear-gradient(180deg, var(--theme-bg-gradient-start) 0%, var(--theme-bg-gradient-end) 100%);
 }
 
 .form-card {
   background-color: #ffffff;
-  border-radius: 20rpx;
-  padding: 8rpx 24rpx;
-  margin-bottom: 20rpx;
+  border-radius: var(--theme-card-radius);
+  padding: 16rpx 32rpx;
+  margin-bottom: 24rpx;
+  box-shadow: var(--theme-card-shadow);
 }
 
 .form-item {
   display: flex;
   align-items: center;
-  padding: 22rpx 0;
-  border-bottom: 1rpx solid #f1f1f3;
+  padding: 24rpx 0;
+  border-bottom: 1rpx solid #f3f4f6;
 }
 
 .form-item:last-child {
@@ -210,7 +223,7 @@ onLoad((options: Record<string, any>) => {
 .label {
   width: 180rpx;
   font-size: 26rpx;
-  color: #333333;
+  color: var(--theme-text-title);
 }
 
 .input {
@@ -232,11 +245,11 @@ onLoad((options: Record<string, any>) => {
   flex: 1;
   text-align: right;
   font-size: 26rpx;
-  color: #333333;
+  color: var(--theme-text-title);
 }
 
 .placeholder {
-  color: #b0b0b0;
+  color: var(--theme-text-subtitle);
 }
 
 .footer {
@@ -244,10 +257,10 @@ onLoad((options: Record<string, any>) => {
   left: 0;
   right: 0;
   bottom: 0;
-  padding: 12rpx 24rpx env(safe-area-inset-bottom);
+  padding: 20rpx 32rpx env(safe-area-inset-bottom);
   box-sizing: border-box;
-  background-color: #ffffff;
-  box-shadow: 0 -4rpx 12rpx rgba(0, 0, 0, 0.04);
+  background-color: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 -10rpx 30rpx rgba(0, 122, 255, 0.06);
 }
 
 .save-btn {
@@ -255,8 +268,8 @@ onLoad((options: Record<string, any>) => {
   height: 88rpx;
   line-height: 88rpx;
   text-align: center;
-  border-radius: 44rpx;
-  background-color: #0a7aff;
+  border-radius: var(--theme-btn-radius);
+  background-color: #007AFF;
   color: #ffffff;
   font-size: 30rpx;
 }

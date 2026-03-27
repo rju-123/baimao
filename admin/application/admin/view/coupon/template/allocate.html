@@ -1,0 +1,33 @@
+<form id="allocate-form" class="form-horizontal" role="form" data-toggle="validator" method="POST" action="">
+    {:token()}
+    <div class="form-group">
+        <label class="control-label col-xs-12 col-sm-2">优惠券模板:</label>
+        <div class="col-xs-12 col-sm-6">
+            <p class="form-control-static">{$row.name}（{$row.code}）</p>
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="c-companyId" class="control-label col-xs-12 col-sm-2">选择公司:</label>
+        <div class="col-xs-12 col-sm-4">
+            <select id="c-companyId" data-rule="required" class="form-control" name="companyId">
+                <option value="">请选择公司</option>
+                {volist name="companies" id="c"}
+                <option value="{$c.id}">{$c.name}</option>
+                {/volist}
+            </select>
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="c-quantity" class="control-label col-xs-12 col-sm-2">发放数量:</label>
+        <div class="col-xs-12 col-sm-4">
+            <input id="c-quantity" data-rule="required;integer;min(1)" class="form-control" name="quantity" type="number" value="1" min="1">
+        </div>
+    </div>
+    <div class="form-group layer-footer">
+        <label class="control-label col-xs-12 col-sm-2"></label>
+        <div class="col-xs-12 col-sm-8">
+            <button type="submit" class="btn btn-primary btn-embossed disabled">确定发放</button>
+            <button type="button" class="btn btn-default btn-embossed" onclick="Layer.closeAll();">取消</button>
+        </div>
+    </div>
+</form>

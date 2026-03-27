@@ -257,15 +257,15 @@ onLoad(async (options: any) => {
 <style scoped lang="scss">
 .page {
   min-height: 100vh;
-  padding: 24rpx 24rpx 40rpx;
+  padding: 32rpx 32rpx 48rpx;
   box-sizing: border-box;
-  background-color: #f7f8fa;
+  background: linear-gradient(180deg, var(--theme-bg-gradient-start) 0%, var(--theme-bg-gradient-end) 100%);
 }
 
 .title {
   font-size: 34rpx;
   font-weight: 600;
-  color: #111827;
+  color: var(--theme-text-title);
   margin-bottom: 12rpx;
 }
 
@@ -275,13 +275,14 @@ onLoad(async (options: any) => {
 
 .summary {
   font-size: 24rpx;
-  color: #6b7280;
+  color: var(--theme-text-subtitle);
 }
 
 .content {
-  padding: 20rpx 16rpx;
-  border-radius: 20rpx;
+  padding: 28rpx 24rpx;
+  border-radius: var(--theme-card-radius);
   background-color: #ffffff;
+  box-shadow: var(--theme-card-shadow);
 }
 
 .attachment-section {
@@ -306,12 +307,12 @@ onLoad(async (options: any) => {
 .attachment-header-title {
   font-size: 26rpx;
   font-weight: 600;
-  color: #111827;
+  color: var(--theme-text-title);
 }
 
 .attachment-header-count {
   font-size: 24rpx;
-  color: #6b7280;
+  color: var(--theme-text-subtitle);
 }
 
 .attachment-list {
@@ -323,10 +324,10 @@ onLoad(async (options: any) => {
 .attachment-card {
   display: flex;
   align-items: center;
-  padding: 20rpx 24rpx;
-  border-radius: 24rpx;
+  padding: 24rpx 28rpx;
+  border-radius: var(--theme-card-radius);
   background-color: #ffffff;
-  box-shadow: 0 8rpx 24rpx rgba(15, 23, 42, 0.06);
+  box-shadow: var(--theme-card-shadow);
 }
 
 .attachment-card-icon {

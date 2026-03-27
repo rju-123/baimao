@@ -15,11 +15,22 @@ function patchProjectConfig(root: string, outDir: string) {
   try {
     const content = readFileSync(outPath, 'utf-8');
     const json = JSON.parse(content) as Record<string, unknown>;
-    if (json.miniprogramRoot !== undefined)
-      return;
-    json.miniprogramRoot = './';
-    writeFileSync(outPath, `${JSON.stringify(json, null, 2)}\n`, 'utf-8');
-    console.log('[patch-mp-weixin] 已写入 miniprogramRoot 到 project.config.json');
+    let changed = false;
+    if (json.miniprogramRoot === undefined) {
+      json.miniprogramRoot = './';
+      changed = true;
+    }
+    // 确保开发时可请求本地接口，避免「网络连接错误」
+    const setting = { ...(json.setting as Record<string, unknown> || {}) };
+    if (setting.urlCheck !== false) {
+      setting.urlCheck = false;
+      json.setting = setting;
+      changed = true;
+    }
+    if (changed) {
+      writeFileSync(outPath, `${JSON.stringify(json, null, 2)}\n`, 'utf-8');
+      console.log('[patch-mp-weixin] 已修补 project.config.json');
+    }
   }
   catch (e) {
     console.warn('[patch-mp-weixin] 修补 project.config.json 失败:', e);

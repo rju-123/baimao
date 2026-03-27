@@ -18,16 +18,3 @@
         </div>
     </div>
 </div>
-
-<script type="text/javascript">
-    require.config({
-        paths: {
-            'backend/company/company': '/assets/js/backend/company/company'
-        }
-    });
-    require(['backend', 'table', 'form', 'backend/company/company'], function (Backend, Table, Form, Controller) {
-        if (Controller && typeof Controller.index === 'function') {
-            Controller.index();
-        }
-    });
-</script>

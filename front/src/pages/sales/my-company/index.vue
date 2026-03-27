@@ -344,17 +344,17 @@ const confirmTransfer = (member: MemberItem) => {
 <style scoped lang="scss">
 .my-company-page {
   min-height: 100vh;
-  padding: 24rpx 24rpx 40rpx;
+  padding: 32rpx 32rpx 48rpx;
   box-sizing: border-box;
-  background-color: #f7f8fa;
+  background: linear-gradient(180deg, var(--theme-bg-gradient-start) 0%, var(--theme-bg-gradient-end) 100%);
 }
 
 .summary-card {
-  padding: 24rpx 28rpx;
-  border-radius: 24rpx;
+  padding: 32rpx 40rpx;
+  border-radius: var(--theme-card-radius);
   background-color: #ffffff;
-  box-shadow: 0 8rpx 20rpx rgba(15, 23, 42, 0.04);
-  margin-bottom: 24rpx;
+  box-shadow: var(--theme-card-shadow);
+  margin-bottom: 28rpx;
 }
 
 .summary-header {
@@ -371,21 +371,21 @@ const confirmTransfer = (member: MemberItem) => {
 .company-name {
   font-size: 30rpx;
   font-weight: 600;
-  color: #111827;
+  color: var(--theme-text-title);
 }
 
 .company-subtitle {
   margin-top: 6rpx;
   font-size: 24rpx;
-  color: #6b7280;
+  color: var(--theme-text-subtitle);
 }
 
 .manage-toggle {
   padding: 10rpx 28rpx;
-  border-radius: 9999rpx;
+  border-radius: var(--theme-btn-radius);
   font-size: 26rpx;
-  color: #2563eb;
-  background-color: #eff6ff;
+  color: #007AFF;
+  background-color: rgba(0, 122, 255, 0.1);
 }
 
 .summary-metrics {
@@ -402,14 +402,14 @@ const confirmTransfer = (member: MemberItem) => {
 
 .metric-label {
   font-size: 22rpx;
-  color: #6b7280;
+  color: var(--theme-text-subtitle);
   margin-bottom: 4rpx;
 }
 
 .metric-value {
   font-size: 30rpx;
   font-weight: 600;
-  color: #111827;
+  color: var(--theme-text-title);
 }
 
 .section-header {
@@ -422,7 +422,7 @@ const confirmTransfer = (member: MemberItem) => {
 .section-title {
   font-size: 30rpx;
   font-weight: 600;
-  color: #111827;
+  color: var(--theme-text-title);
 }
 
 .section-cancel {
@@ -436,11 +436,11 @@ const confirmTransfer = (member: MemberItem) => {
 }
 
 .member-card {
-  margin-bottom: 16rpx;
-  padding: 18rpx 20rpx;
-  border-radius: 20rpx;
+  margin-bottom: 20rpx;
+  padding: 24rpx 28rpx;
+  border-radius: var(--theme-card-radius);
   background-color: #ffffff;
-  box-shadow: 0 4rpx 14rpx rgba(15, 23, 42, 0.04);
+  box-shadow: var(--theme-card-shadow);
 }
 
 .member-main {
@@ -452,8 +452,8 @@ const confirmTransfer = (member: MemberItem) => {
   width: 72rpx;
   height: 72rpx;
   border-radius: 9999rpx;
-  background-color: #e0f2fe;
-  color: #0a7aff;
+  background-color: rgba(0, 122, 255, 0.1);
+  color: #007AFF;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -473,7 +473,7 @@ const confirmTransfer = (member: MemberItem) => {
 .member-name {
   font-size: 28rpx;
   font-weight: 500;
-  color: #111827;
+  color: var(--theme-text-title);
 }
 
 .member-role-tag {
@@ -481,7 +481,7 @@ const confirmTransfer = (member: MemberItem) => {
   padding: 2rpx 10rpx;
   border-radius: 9999rpx;
   font-size: 20rpx;
-  background-color: #0a7aff;
+  background-color: #007AFF;
   color: #ffffff;
 }
 
@@ -497,7 +497,7 @@ const confirmTransfer = (member: MemberItem) => {
 .member-meta {
   margin-top: 4rpx;
   font-size: 22rpx;
-  color: #6b7280;
+  color: var(--theme-text-subtitle);
   display: flex;
   flex-direction: column;
   gap: 4rpx;
@@ -541,8 +541,8 @@ const confirmTransfer = (member: MemberItem) => {
 }
 
 .btn-transfer {
-  background-color: #eff6ff;
-  color: #1d4ed8;
+  background-color: rgba(0, 122, 255, 0.1);
+  color: #007AFF;
 }
 
 .empty {

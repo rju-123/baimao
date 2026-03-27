@@ -1,26 +1,50 @@
-// 主题CSS变量
+// 主题CSS变量 - Glassmorphism-lite 风格
 :root,
 page {
-  // 主色调 - PRD 微信蓝 / 绿 / 红
-  --theme-primary: #0A7AFF;
-  --theme-primary-dark: #0960d9;
+  // 主色调 - 饱和蓝 #0066CC ~ #007AFF
+  --theme-primary: #007AFF;
+  --theme-primary-dark: #0066CC;
   --theme-success: #34C759;
   --theme-warning: #f0ad4e;
   --theme-error: #FF3B30;
 
-  // 文字颜色
-  --theme-main-color: #1b233b;
-  --theme-content-color: #60687e;
-  --theme-tips-color: #7e869a;
+  // 文字颜色 - #333 主标题，#666/#999 副标题
+  --theme-main-color: #333333;
+  --theme-content-color: #666666;
+  --theme-tips-color: #999999;
   --theme-light-color: #bdc3d2;
   --theme-disabled-color: #dce0eb;
+  --theme-text-title: #333333;
+  --theme-text-subtitle: #666666;
 
   // 背景颜色
   --theme-bg-color: #ffffff;
   --theme-bg-color-secondary: #f8f9fa;
+  --theme-bg-gradient-start: #F8F8F8;
+  --theme-bg-gradient-end: #E6F0FF;
 
   // 边框颜色
   --theme-border-color: #e9ecef;
+  --theme-border-light: #E0E0E0;
+
+  // 圆角 - 大圆角卡片 40-60px，按钮 10-12px
+  --theme-card-radius: 48rpx;
+  --theme-btn-radius: 24rpx;
+
+  // 阴影 - 柔和蓝调光晕
+  --theme-card-shadow: 0 20rpx 60rpx rgba(0, 122, 255, 0.08);
+
+  // NutUI 组件覆盖 - Glassmorphism-lite 风格
+  --nut-primary-color: #007AFF;
+  --nut-primary-color-end: #007AFF;
+  --nut-button-border-radius: 12px;
+  --nut-button-primary-background-color: #007AFF;
+  --nut-button-primary-border-color: #007AFF;
+  --nut-button-default-border-color: #E0E0E0;
+  --nut-button-default-color: #007AFF;
+  --nut-button-default-bg-color: #ffffff;
+  --nut-cell-border-radius: 12px;
+  --nut-cell-after-border-bottom: 1px solid #f3f4f6;
 }
 
 .theme-dark {
@@ -36,10 +60,14 @@ page {
   --theme-tips-color: #8a8f95;
   --theme-light-color: #6c757d;
   --theme-disabled-color: #495057;
+  --theme-text-title: #ffffff;
+  --theme-text-subtitle: #b0b8c1;
 
   // 背景颜色
   --theme-bg-color: #1a1a1a;
   --theme-bg-color-secondary: #2d2d2d;
+  --theme-bg-gradient-start: #1a1a1a;
+  --theme-bg-gradient-end: #2d2d2d;
 }
 
 // 主题工具类
@@ -61,4 +89,8 @@ page {
 
 .theme-text-tips {
   color: var(--theme-tips-color);
+}
+
+.theme-text-label {
+  color: var(--theme-text-subtitle);
 }

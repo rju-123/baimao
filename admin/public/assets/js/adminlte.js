@@ -296,12 +296,16 @@ function _init() {
                     $(".sidebar").slimScroll({destroy: true}).height("auto");
                 }
                 return;
-            } else if (typeof $.fn.slimScroll == 'undefined' && window.console) {
-                window.console.error("Error: the fixed layout requires the slimscroll plugin!");
+            }
+            // slimscroll 未加载时跳过，避免报错（需执行 npm run build 复制 libs）
+            var hasSlimScroll = typeof $.fn.slimScroll != 'undefined' || typeof $.fn.slimscroll != 'undefined';
+            if (!hasSlimScroll) {
+                $.AdminLTE.options.sidebarSlimScroll = false;
+                return;
             }
             //Enable slimscroll for fixed layout
             if ($.AdminLTE.options.sidebarSlimScroll) {
-                if (typeof $.fn.slimScroll != 'undefined') {
+                if (hasSlimScroll) {
                     //Destroy if it exists
                     $(".sidebar").slimScroll({destroy: true}).height("auto").css("overflow", "inherit");
                     if (!$("body").hasClass('sidebar-collapse')) {

@@ -127,33 +127,35 @@ onShow(() => {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background-color: #f5f5f7;
+  background: linear-gradient(180deg, var(--theme-bg-gradient-start) 0%, var(--theme-bg-gradient-end) 100%);
 }
 
 .header {
-  padding: 24rpx 32rpx;
+  padding: 32rpx 40rpx;
 }
 
 .title {
   font-size: 32rpx;
   font-weight: 600;
+  color: var(--theme-text-title);
 }
 
 .list {
   flex: 1;
-  padding: 0 24rpx 24rpx;
+  padding: 0 32rpx 32rpx;
   box-sizing: border-box;
 }
 
 .addr-card {
   background-color: #ffffff;
-  border-radius: 20rpx;
-  padding: 24rpx 28rpx;
-  margin-bottom: 16rpx;
+  border-radius: var(--theme-card-radius);
+  padding: 28rpx 32rpx;
+  margin-bottom: 20rpx;
+  box-shadow: var(--theme-card-shadow);
 }
 
 .addr-card.active {
-  border: 2rpx solid #0a7aff;
+  border: 2rpx solid #007AFF;
 }
 
 .addr-row {
@@ -166,39 +168,40 @@ onShow(() => {
   font-size: 30rpx;
   font-weight: 600;
   margin-right: 20rpx;
+  color: var(--theme-text-title);
 }
 
 .phone {
   font-size: 26rpx;
-  color: #333333;
+  color: var(--theme-text-subtitle);
 }
 
 .tag-default {
   margin-left: auto;
-  padding: 4rpx 12rpx;
+  padding: 6rpx 14rpx;
   border-radius: 20rpx;
   font-size: 22rpx;
-  color: #0a7aff;
-  background-color: rgba(10, 122, 255, 0.08);
+  color: #007AFF;
+  background-color: rgba(0, 122, 255, 0.1);
 }
 
 .addr-detail {
   font-size: 24rpx;
-  color: #8e8e93;
+  color: var(--theme-text-subtitle);
 }
 
 .empty {
   padding: 80rpx 0;
   text-align: center;
-  color: #8e8e93;
+  color: var(--theme-text-subtitle);
   font-size: 26rpx;
 }
 
 .footer {
-  padding: 12rpx 24rpx env(safe-area-inset-bottom);
+  padding: 20rpx 32rpx env(safe-area-inset-bottom);
   box-sizing: border-box;
-  background-color: #ffffff;
-  box-shadow: 0 -4rpx 12rpx rgba(0, 0, 0, 0.04);
+  background-color: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 -10rpx 30rpx rgba(0, 122, 255, 0.06);
 }
 
 .add-btn {
@@ -206,10 +209,10 @@ onShow(() => {
   height: 88rpx;
   line-height: 88rpx;
   text-align: center;
-  border-radius: 44rpx;
-  border: 2rpx solid #0a7aff;
+  border-radius: var(--theme-btn-radius);
+  border: 1px solid #E0E0E0;
   background-color: #ffffff;
-  color: #0a7aff;
+  color: #007AFF;
   font-size: 28rpx;
 }
 </style>

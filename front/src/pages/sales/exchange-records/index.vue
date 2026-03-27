@@ -124,9 +124,9 @@ onShow(() => {
 <style scoped lang="scss">
 .page {
   min-height: 100vh;
-  padding: 24rpx;
+  padding: 32rpx;
   box-sizing: border-box;
-  background-color: #f2f2f7;
+  background: linear-gradient(180deg, var(--theme-bg-gradient-start) 0%, var(--theme-bg-gradient-end) 100%);
 }
 
 .list {
@@ -135,9 +135,10 @@ onShow(() => {
 
 .record-card {
   background-color: #ffffff;
-  border-radius: 16rpx;
-  padding: 20rpx 24rpx;
-  margin-bottom: 16rpx;
+  border-radius: var(--theme-card-radius);
+  padding: 24rpx 28rpx;
+  margin-bottom: 20rpx;
+  box-shadow: var(--theme-card-shadow);
 }
 
 .record-main {
@@ -168,7 +169,7 @@ onShow(() => {
 }
 
 .status-shipped {
-  background-color: #0a7aff;
+  background-color: #007AFF;
 }
 
 .status-received,

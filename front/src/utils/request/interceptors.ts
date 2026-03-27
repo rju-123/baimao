@@ -53,6 +53,13 @@ function requestInterceptors(http: Request) {
       if (getToken() && custom?.auth !== false) {
         config.header.token = getToken();
       }
+
+      // 避免 GET 请求命中 ETag 导致 304（我们的请求封装无法复用缓存体）
+      if (config.method === 'GET') {
+        config.header['Cache-Control'] = 'no-cache';
+        config.header.Pragma = 'no-cache';
+      }
+
       if (custom?.loading) {
         uni.showLoading({ title: '加载中', mask: true });
       }

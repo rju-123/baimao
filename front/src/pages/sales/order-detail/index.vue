@@ -1,10 +1,10 @@
 <template>
   <view class="page" v-if="order">
-    <!-- 顶部订单信息 -->
+    <!-- 顶部：标题（产品名称+数量）、状态、订单号/创建时间/交付时间 -->
     <view class="card card-header">
       <view class="header-top">
         <view class="header-title">
-          {{ order.productName }}
+          {{ headerTitle }}
         </view>
         <view class="header-status" :class="`status-${order.status}`">
           {{ statusText }}
@@ -12,96 +12,234 @@
       </view>
       <view class="header-meta">
         <view class="meta-row">
-          <text class="meta-label">订单号：</text>
+          <text class="meta-icon">📋</text>
+          <text class="meta-label">订单号</text>
           <text class="meta-value">{{ order.orderNo }}</text>
         </view>
         <view class="meta-row">
-          <text class="meta-label">创建时间：</text>
+          <text class="meta-icon">📅</text>
+          <text class="meta-label">创建时间</text>
           <text class="meta-value">{{ formatOrderTime(order) }}</text>
         </view>
+        <view class="meta-row">
+          <text class="meta-icon">🕐</text>
+          <text class="meta-label">交付时间</text>
+          <text class="meta-value">{{ deliveryTimeDisplay }}</text>
+        </view>
       </view>
     </view>
 
-    <!-- 订单内容 -->
-    <view class="card">
+    <!-- 订单内容：每个产品 名称、订单详情、单价×数量、小计 -->
+    <view class="card card-content">
       <view class="section-title">
+        <text class="section-icon">📦</text>
         订单内容
       </view>
-      <view class="content-row">
-        <view class="content-name">
-          {{ order.productName }}
+      <view
+        v-for="(item, idx) in orderItems"
+        :key="idx"
+        class="content-item"
+      >
+        <view class="item-name">
+          {{ item.name }}
         </view>
-        <view class="content-amount">
-          ￥{{ formatAmount(order.payAmount) }}
+        <view class="item-detail-label">
+          订单详情
         </view>
+        <view class="item-detail-text">
+          {{ item.detail || '—' }}
+        </view>
+        <view class="item-price-row">
+          <text class="item-price-qty">
+            {{ item.unitPrice != null ? `¥${formatAmount(item.unitPrice)} × ${item.quantity}` : `× ${item.quantity}` }}
+          </text>
+          <text v-if="item.subtotal != null" class="item-subtotal">
+            ¥{{ formatAmount(item.subtotal) }}
+          </text>
+        </view>
+        <view v-if="idx < orderItems.length - 1" class="item-divider" />
+      </view>
+      <view class="content-total">
+        <text class="total-label">订单总额</text>
+        <text class="total-value">¥{{ formatAmount(order.payAmount) }}</text>
       </view>
     </view>
 
-    <!-- 订单详情 -->
-    <view class="card">
+    <!-- 客户信息（来自后台产品信息） -->
+    <view class="card" v-if="customerInfoDisplay">
       <view class="section-title">
-        订单详情
+        <text class="section-icon">👥</text>
+        客户信息
       </view>
-      <view class="detail-text">
-        {{ order.productDetail || product?.detail || '该产品已下架，详细信息不可用' }}
+      <view class="info-row">
+        <text class="info-value">{{ customerInfoDisplay }}</text>
       </view>
     </view>
 
-    <!-- 接单人信息（白帽子） -->
+    <!-- 接单人 -->
     <view class="card">
       <view class="section-title">
+        <text class="section-icon">👤</text>
         接单人
       </view>
       <view class="info-row">
         <text class="info-label">姓名</text>
-        <text class="info-value">
-          {{ order.whitehatName || '暂未指派' }}
-        </text>
+        <text class="info-value">{{ order.whitehatName || '暂未指派' }}</text>
       </view>
       <view class="info-row">
         <text class="info-label">联系电话</text>
-        <text class="info-value">
-          {{ order.whitehatPhone || '—' }}
-        </text>
+        <text class="info-value">{{ maskPhone(order.whitehatPhone) }}</text>
       </view>
     </view>
 
     <!-- 电子合同 -->
     <view class="card">
       <view class="section-title">
+        <text class="section-icon">📄</text>
         电子合同
       </view>
-      <view v-if="order.contractUrl" class="contract-actions">
-        <button class="contract-btn secondary" @tap="viewContract">
-          查看
-        </button>
-        <button class="contract-btn primary" @tap="downloadContract">
+      <view v-if="contractPdfUrl" class="contract-actions">
+        <button class="contract-btn primary contract-btn-download" @tap="downloadContract">
           下载
         </button>
       </view>
       <view v-else class="contract-empty">
-        <text class="contract-empty-text">暂未上传电子合同</text>
+        <text v-if="contractEnsurePending" class="contract-empty-text">正在生成电子合同…</text>
+        <text v-else class="contract-empty-text">暂无电子合同（生成失败或未就绪时可稍后重试）</text>
       </view>
     </view>
   </view>
   <view v-else class="page loading">
-    <view class="theme-text-tips">
-      正在加载订单详情...
-    </view>
+    <view class="theme-text-tips">正在加载订单详情...</view>
   </view>
 </template>
 
 <script setup lang="ts">
-import { onLoad } from '@dcloudio/uni-app';
+import { onLoad, onShow } from '@dcloudio/uni-app';
 import { OrderApi, ProductApi } from '@/api';
 import { toast } from '@/utils/uni-helpers';
 
 const order = ref<OrderApi.Order | null>(null);
 const product = ref<ProductApi.Product | null>(null);
+/** 当前详情订单 ID，用于 onShow 再次拉单（合同异步生成完成后可刷出） */
+const currentOrderId = ref(0);
+/** 正在请求后端生成合同时展示，避免误以为无合同 */
+const contractEnsurePending = ref(false);
+
+/** 并发生成合同时合并为单次请求（onShow 可能连续触发） */
+let contractEnsureInFlight: Promise<void> | null = null;
+
+/** 兼容 API 返回 camelCase / snake_case */
+function normalizeOrder(raw: OrderApi.Order | Record<string, unknown>): OrderApi.Order {
+  const r = raw as Record<string, unknown>;
+  return {
+    ...(raw as OrderApi.Order),
+    contractUrl: (r.contractUrl ?? r.contract_url) as string | undefined,
+    contractStatus: (r.contractStatus ?? r.contract_status) as string | undefined,
+    productCustomer: (r.productCustomer ?? r.product_customer) as string | undefined,
+    lineItemsJson: (r.lineItemsJson ?? r.line_items_json) as any[] | null | undefined,
+  };
+}
+
+/** 电子合同 PDF 地址（归一化后） */
+const contractPdfUrl = computed(() => {
+  const o = order.value;
+  if (!o) return '';
+  const u = (o as Record<string, unknown>).contractUrl ?? (o as Record<string, unknown>).contract_url;
+  const s = u != null ? String(u).trim() : '';
+  return s;
+});
+
+/** 标题：产品名称及对应数量（单商品为 "名称 × 数量"，多商品为汇总文案） */
+const headerTitle = computed(() => {
+  if (!order.value) return '';
+  const o = order.value;
+  // 合并单：productName 已是 "产品Ax2，产品Bx1"
+  if (isMergedOrder(o))
+    return o.productName;
+  return `${o.productName} × ${o.quantity}`;
+});
+
+/** 是否合并单（购物车多商品下单） */
+function isMergedOrder(o: OrderApi.Order): boolean {
+  const name = (o.productName || '').trim();
+  return name.includes('，') || /^.+\d+$/.test(name);
+}
+
+/** 解析订单为展示项：单商品一条；合并单按 "名称x数量" 拆分 */
+interface OrderItemRow {
+  name: string;
+  quantity: number;
+  unitPrice?: number;
+  subtotal?: number;
+  detail?: string;
+}
+
+const orderItems = computed<OrderItemRow[]>(() => {
+  if (!order.value) return [];
+  const o = order.value;
+  const detail = (o.productDetail || product.value?.detail || '').trim() || undefined;
+
+  if (!isMergedOrder(o)) {
+    const qty = Math.max(1, Number(o.quantity || 1));
+    const unit = Number(o.unitPrice ?? 0);
+    const sub = Number(o.amount ?? 0) || unit * qty;
+    return [{
+      name: o.productName,
+      quantity: qty,
+      unitPrice: unit,
+      subtotal: sub,
+      detail,
+    }];
+  }
+
+  const parts = o.productName.split('，').map(s => s.trim()).filter(Boolean);
+  const rows: OrderItemRow[] = [];
+  for (const part of parts) {
+    const match = part.match(/^(.+?)x(\d+)$/);
+    if (match) {
+      rows.push({
+        name: match[1].trim(),
+        quantity: parseInt(match[2], 10) || 1,
+        detail,
+      });
+    } else {
+      rows.push({ name: part, quantity: 1, detail });
+    }
+  }
+  if (rows.length === 0)
+    rows.push({ name: o.productName, quantity: 1, detail });
+  return rows;
+});
+
+/** 交付时间：单商品用产品交付时间，合并单暂无 */
+const deliveryTimeDisplay = computed(() => {
+  if (product.value?.deliveryTime)
+    return String(product.value.deliveryTime);
+  return '—';
+});
+
+/** 客户信息：来自后台产品信息的 product_customer 字段，与订单列表展示一致 */
+const customerInfoDisplay = computed(() => {
+  const o = order.value;
+  if (!o) return '';
+  const raw = (o as any).lineItemsJson ?? (o as any).line_items_json;
+  if (Array.isArray(raw) && raw.length) {
+    const set = new Set<string>();
+    for (const it of raw) {
+      const c = String(it?.customer ?? '').trim();
+      if (c)
+        set.add(c);
+    }
+    if (set.size)
+      return Array.from(set).join('、');
+  }
+  const s = (o.productCustomer ?? (o as any).product_customer ?? '').trim();
+  return s;
+});
 
 const statusText = computed(() => {
-  if (!order.value)
-    return '';
+  if (!order.value) return '';
   const map: Record<string, string> = {
     signing: '签署中',
     pending_contract: '待签约',
@@ -113,24 +251,22 @@ const statusText = computed(() => {
   return map[order.value.status] || '签署中';
 });
 
-/** 金额可能为后端 decimal 字符串 */
 function formatAmount(val: number | string | null | undefined): string {
   const n = Number(val);
   return Number.isNaN(n) ? '0' : n.toFixed(0);
 }
 
-/** 订单时间：支持 createtime（Unix 秒）或 createdAt（ISO 字符串） */
-function formatOrderTime(o: OrderApi.Order) {
+function formatOrderTime(o: OrderApi.Order): string {
   if (o.createtime != null) {
     const d = new Date(o.createtime * 1000);
     return formatDatePart(d);
   }
   if (o.createdAt)
     return formatDatePart(new Date(o.createdAt));
-  return '';
+  return '—';
 }
 
-function formatDatePart(d: Date) {
+function formatDatePart(d: Date): string {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');
@@ -139,71 +275,74 @@ function formatDatePart(d: Date) {
   return `${y}-${m}-${day} ${hh}:${mm}`;
 }
 
+function maskPhone(phone: string | null | undefined): string {
+  if (!phone || !phone.trim()) return '—';
+  const s = String(phone).trim();
+  if (s.length >= 11)
+    return s.slice(0, 3) + '****' + s.slice(-4);
+  return s;
+}
+
 async function fetchData(id: number) {
   try {
     const o = await OrderApi.getOrder(id);
-    order.value = o;
-    const p = await ProductApi.getProduct(o.productId);
-    product.value = p;
-  }
-  catch {
+    order.value = normalizeOrder(o);
+    if (o.productId)
+      product.value = await ProductApi.getProduct(o.productId);
+    else
+      product.value = null;
+  } catch {
     toast('加载订单详情失败');
   }
 }
 
+/**
+ * 打开详情：先拉订单；若无合同 URL 则自动调用后端生成并再拉一次，保证进入页面后即可下载。
+ */
+async function fetchDataAndEnsureContract(id: number) {
+  contractEnsurePending.value = false;
+  await fetchData(id);
+  if (contractPdfUrl.value)
+    return;
+
+  contractEnsurePending.value = true;
+  try {
+    if (!contractEnsureInFlight) {
+      contractEnsureInFlight = (async () => {
+        try {
+          await OrderApi.generateContract(id);
+          await fetchData(id);
+        } finally {
+          contractEnsureInFlight = null;
+        }
+      })();
+    }
+    await contractEnsureInFlight;
+  } catch {
+    /* 拦截器通常会 toast；无合同时保留占位文案 */
+  } finally {
+    contractEnsurePending.value = false;
+  }
+}
+
+/** 合同 PDF 由 NestJS 的 /uploads 提供，与 VITE_API_BASE_URL 同源 */
 function ensureAbsoluteUrl(url: string): string {
-  if (!url)
-    return url;
-  if (url.startsWith('http://') || url.startsWith('https://'))
-    return url;
-  // 相对路径时，拼接后台域名，需与实际部署保持一致
-  const base = 'http://127.0.0.1:8000';
-  return `${base}${url.startsWith('/') ? '' : '/'}${url}`;
+  if (!url) return url;
+  if (url.startsWith('http://') || url.startsWith('https://')) return url;
+  const base = (import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:3000').replace(/\/$/, '');
+  return `${base}/${url.replace(/^\//, '')}`;
 }
 
-async function viewContract() {
-  if (!order.value?.contractUrl) {
+function downloadContract() {
+  if (!contractPdfUrl.value) {
     toast('暂未上传电子合同');
     return;
   }
-  const url = ensureAbsoluteUrl(order.value.contractUrl);
+  const url = ensureAbsoluteUrl(contractPdfUrl.value);
   uni.downloadFile({
     url,
-    success(res) {
-      if (!res.tempFilePath) {
-        toast('下载电子合同失败');
-        return;
-      }
-      uni.openDocument({
-        filePath: res.tempFilePath,
-        fileType: 'pdf',
-        showMenu: true,
-        success() {},
-        fail() {
-          toast('打开电子合同失败');
-        },
-      });
-    },
-    fail() {
-      toast('下载电子合同失败');
-    },
-  });
-}
-
-async function downloadContract() {
-  if (!order.value?.contractUrl) {
-    toast('暂未上传电子合同');
-    return;
-  }
-  const url = ensureAbsoluteUrl(order.value.contractUrl);
-  uni.downloadFile({
-    url,
-    success() {
-      toast('电子合同已开始下载，请在微信中查看文件');
-    },
-    fail() {
-      toast('下载电子合同失败');
-    },
+    success() { toast('电子合同已开始下载，请在微信中查看文件'); },
+    fail() { toast('下载电子合同失败'); },
   });
 }
 
@@ -213,130 +352,231 @@ onLoad((options: any) => {
     toast('缺少订单ID');
     return;
   }
-  fetchData(id);
+  currentOrderId.value = id;
+});
+
+/** 进入/返回页面时拉单并确保电子合同已生成 */
+onShow(() => {
+  const id = currentOrderId.value;
+  if (id)
+    void fetchDataAndEnsureContract(id);
 });
 </script>
 
 <style scoped lang="scss">
 .page {
-  @apply min-h-screen px-40rpx pt-40rpx pb-40rpx;
-  background: #f7f8fa;
+  min-height: 100vh;
+  padding: 32rpx 32rpx 48rpx;
+  box-sizing: border-box;
+  background: linear-gradient(180deg, var(--theme-bg-gradient-start) 0%, var(--theme-bg-gradient-end) 100%);
 }
 
 .card {
-  @apply mb-24rpx px-32rpx pt-24rpx pb-24rpx rounded-24rpx;
+  margin-bottom: 28rpx;
+  padding: 32rpx 40rpx;
+  border-radius: var(--theme-card-radius);
   background: #ffffff;
-  box-shadow: 0 10rpx 30rpx rgba(0, 0, 0, 0.04);
+  box-shadow: var(--theme-card-shadow);
 }
 
 .card-header {
-  @apply mb-24rpx;
+  padding: 28rpx 32rpx 24rpx;
 }
 
 .header-top {
-  @apply flex justify-between items-center mb-8rpx;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20rpx;
 }
 
 .header-title {
-  @apply text-30rpx font-600;
-  color: #1b233b;
+  flex: 1;
+  font-size: 34rpx;
+  font-weight: 700;
+  color: var(--theme-text-title);
+  margin-right: 16rpx;
+  line-height: 1.35;
 }
 
 .header-status {
-  @apply text-24rpx;
+  flex-shrink: 0;
+  padding: 8rpx 16rpx;
+  border-radius: var(--theme-btn-radius);
+  font-size: 24rpx;
+  font-weight: 500;
 }
 
+.status-signing,
 .status-pending_contract {
-  color: #0A7AFF;
-}
-
-.status-signing {
-  color: #0A7AFF;
+  color: #007AFF;
+  background: rgba(0, 122, 255, 0.1);
 }
 
 .status-pending_fulfillment,
 .status-in_progress {
   color: #ff9500;
+  background: #fff7ed;
 }
 
 .status-completed {
   color: #34C759;
+  background: #f0fdf4;
 }
 
 .status-cancelled {
   color: #8e8e93;
+  background: #f3f4f6;
 }
 
 .header-meta {
-  @apply mt-4rpx;
+  margin-top: 8rpx;
 }
 
 .meta-row {
-  @apply flex;
-  margin-top: 4rpx;
+  display: flex;
+  align-items: center;
+  margin-top: 12rpx;
+  font-size: 26rpx;
+}
+
+.meta-icon {
+  margin-right: 10rpx;
+  font-size: 28rpx;
 }
 
 .meta-label {
-  @apply text-24rpx;
-  color: $u-tips-color;
+  color: #6b7280;
+  margin-right: 12rpx;
 }
 
 .meta-value {
-  @apply text-24rpx;
   color: #1b233b;
+  font-weight: 500;
 }
 
 .section-title {
-  @apply mb-12rpx text-28rpx font-500;
+  display: flex;
+  align-items: center;
+  margin-bottom: 20rpx;
+  font-size: 30rpx;
+  font-weight: 600;
   color: #1b233b;
 }
 
-.content-row {
-  @apply mt-4rpx flex justify-between items-center;
+.section-icon {
+  margin-right: 10rpx;
+  font-size: 32rpx;
 }
 
-.content-name {
-  @apply text-26rpx;
+.card-content {
+  padding: 28rpx 32rpx 24rpx;
+}
+
+.content-item {
+  padding-bottom: 20rpx;
+}
+
+.item-name {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #1b233b;
+  margin-bottom: 8rpx;
+}
+
+.item-detail-label {
+  font-size: 24rpx;
+  color: #6b7280;
+  margin-bottom: 6rpx;
+}
+
+.item-detail-text {
+  font-size: 26rpx;
+  color: #6b7280;
+  line-height: 1.5;
+  margin-bottom: 12rpx;
+}
+
+.item-price-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.item-price-qty {
+  font-size: 26rpx;
   color: #1b233b;
 }
 
-.content-amount {
-  @apply text-28rpx font-600;
-  color: #ff4d4f;
+.item-subtotal {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #ef4444;
 }
 
-.detail-text {
-  @apply mt-4rpx text-26rpx leading-40rpx;
-  color: $u-tips-color;
+.item-divider {
+  height: 1rpx;
+  background: #e5e7eb;
+  margin: 20rpx 0;
+}
+
+.content-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 16rpx;
+  padding-top: 16rpx;
+  border-top: 1rpx solid #e5e7eb;
+}
+
+.total-label {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #1b233b;
+}
+
+.total-value {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #ef4444;
 }
 
 .info-row {
-  @apply mt-8rpx flex justify-between;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 12rpx;
+  font-size: 26rpx;
 }
 
 .info-label {
-  @apply text-26rpx;
-  color: $u-tips-color;
+  color: #6b7280;
 }
 
 .info-value {
-  @apply text-26rpx;
   color: #1b233b;
+  font-weight: 500;
 }
 
 .contract-actions {
-  @apply mt-12rpx flex;
+  display: flex;
+  justify-content: center;
+  margin-top: 16rpx;
 }
 
 .contract-btn {
-  @apply flex-1 text-26rpx py-12rpx rounded-9999 border-0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20rpx 24rpx;
+  border-radius: 16rpx;
+  font-size: 28rpx;
+  border: none;
 }
 
-.contract-btn.secondary {
-  margin-right: 16rpx;
-  background: #ffffff;
-  color: #0A7AFF;
-  border: 1rpx solid #0A7AFF;
+.contract-btn-download {
+  width: 50%;
+  box-sizing: border-box;
 }
 
 .contract-btn.primary {
@@ -345,36 +585,19 @@ onLoad((options: any) => {
 }
 
 .contract-empty {
-  @apply mt-8rpx;
+  margin-top: 8rpx;
 }
 
 .contract-empty-text {
-  @apply text-26rpx;
-  color: $u-tips-color;
-}
-
-.contract-actions {
-  @apply mt-8rpx flex justify-end gap-16rpx;
-}
-
-.contract-btn {
-  @apply px-32rpx py-12rpx rounded-full text-26rpx border;
-}
-
-.contract-btn.primary {
-  color: #ffffff;
-  background-color: #0A7AFF;
-  border-color: #0A7AFF;
-}
-
-.contract-btn.secondary {
-  color: #0A7AFF;
-  background-color: #ffffff;
-  border-color: rgba(10, 122, 255, 0.4);
+  font-size: 26rpx;
+  color: #6b7280;
+  display: block;
 }
 
 .loading {
-  @apply flex items-center justify-center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
 }
 </style>
-

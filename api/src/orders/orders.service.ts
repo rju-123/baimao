@@ -1,19 +1,23 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ProductsService } from '../products/products.service';
 import { UsersService } from '../users/users.service';
+import { ContractService } from '../contract/contract.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { Order } from './order.entity';
 
 @Injectable()
 export class OrdersService {
+  private readonly logger = new Logger(OrdersService.name);
+
   constructor(
     // 使用名为 'mysql' 的连接中的 OrderRepository
     @InjectRepository(Order, 'mysql')
     private readonly ordersRepo: Repository<Order>,
     private readonly productsService: ProductsService,
     private readonly usersService: UsersService,
+    private readonly contractService: ContractService,
   ) {}
 
   async create(dto: CreateOrderDto) {
@@ -29,6 +33,17 @@ export class OrdersService {
     const amount = unitPrice * dto.quantity;
     const discountAmount = dto.couponDiscount ?? 0;
     const payAmount = amount - discountAmount;
+    const lineItems = [
+      {
+        index: 1,
+        name: String(product.name ?? '').trim() || '—',
+        desc: String(product.brief ?? '').trim() || '—',
+        customer: String((product as any)?.customer ?? '').trim() || '',
+        quantity: Math.max(1, Number(dto.quantity || 1)),
+        unitPrice: Number(unitPrice || 0),
+        lineTotal: Number(amount || 0),
+      },
+    ];
 
     // 订单所属公司：优先使用传入的 companyId，否则回退为当前用户的 companyId
     const companyId = dto.companyId ?? user?.companyId ?? null;
@@ -54,6 +69,7 @@ export class OrdersService {
       amount,
       discountAmount,
       payAmount,
+      lineItemsJson: lineItems as any,
       status: 'pending_contract',
       createtime: Math.floor(Date.now() / 1000),
     });
@@ -62,17 +78,12 @@ export class OrdersService {
     // 扣减库存（简单演示，未加事务控制）
     if (typeof product.inventory === 'number') {
       product.inventory -= dto.quantity;
-      if (product.inventory <= 0) {
-        // 库存用尽时，将库存置 0 并标记为已下架，但保留产品记录，
-        // 以保证历史订单详情仍然可以展示完整的产品信息
+      if (product.inventory <= 0)
         product.inventory = 0;
-        (product as any).status = 'expired';
-        await (this.productsService as any).productsRepo.save(product);
-      }
-      else {
-        await (this.productsService as any).productsRepo.save(product);
-      }
+      await (this.productsService as any).productsRepo.save(product);
     }
+
+    await this.tryGenerateContractAfterCreate(saved.id);
 
     return saved;
   }
@@ -86,6 +97,7 @@ export class OrdersService {
     companyId?: number;
     firstProductId: number;
     itemsSummary: string;
+    lineItemsJson?: any;
     amount: number;
     discountAmount: number;
     payAmount: number;
@@ -94,6 +106,25 @@ export class OrdersService {
     const user = await this.usersService.findById(params.userId);
     const companyId = params.companyId ?? user?.companyId ?? null;
     const orderNo = await this.generateOrderNo();
+
+    // 合并单“客户”展示：优先聚合明细内的 customer，否则取首个产品 customer
+    let productCustomer = '';
+    const raw = params.lineItemsJson;
+    if (Array.isArray(raw) && raw.length) {
+      const set = new Set<string>();
+      for (const it of raw) {
+        const c = String(it?.customer ?? '').trim();
+        if (c)
+          set.add(c);
+      }
+      if (set.size)
+        productCustomer = Array.from(set).join('、');
+    }
+    if (!productCustomer && params.firstProductId) {
+      const firstProduct = await this.productsService.findById(params.firstProductId);
+      if (firstProduct?.customer)
+        productCustomer = String(firstProduct.customer).trim();
+    }
 
     const entity = this.ordersRepo.create({
       orderNo,
@@ -105,7 +136,7 @@ export class OrdersService {
       productName: params.itemsSummary,
       productBrief: '',
       productDetail: '',
-      productCustomer: '',
+      productCustomer,
       unitPrice: 0,
       customerName: user?.name ?? '',
       customerPhone: user?.phone ?? '',
@@ -114,10 +145,25 @@ export class OrdersService {
       amount: params.amount,
       discountAmount: params.discountAmount,
       payAmount: params.payAmount,
+      lineItemsJson: params.lineItemsJson ?? null,
       status: params.status,
       createtime: Math.floor(Date.now() / 1000),
     });
-    return this.ordersRepo.save(entity);
+    const saved = await this.ordersRepo.save(entity);
+    await this.tryGenerateContractAfterCreate(saved.id);
+    return saved;
+  }
+
+  /**
+   * 订单创建成功后生成 PDF 合同（等待完成后再返回，便于前端立刻展示）；失败不影响订单本身，仅打日志
+   */
+  private async tryGenerateContractAfterCreate(orderId: number): Promise<void> {
+    try {
+      await this.contractService.generateContract(orderId);
+    }
+    catch (e: any) {
+      this.logger.warn(`订单 ${orderId} 合同自动生成失败: ${e?.message || e}`);
+    }
   }
 
   async findAllByUser(userId: number, status?: string) {
@@ -134,15 +180,119 @@ export class OrdersService {
     if (status)
       where.status = status;
 
-    return this.ordersRepo.find({
-      where,
-      // MySQL 中使用 int 类型的 createtime 记录下单时间，这里按 createtime 倒序
-      order: { createtime: 'DESC' },
+    let list: Order[] = [];
+    try {
+      list = await this.ordersRepo.find({
+        where,
+        // MySQL 中使用 int 类型的 createtime 记录下单时间，这里按 createtime 倒序
+        order: { createtime: 'DESC' },
+      });
+    }
+    catch (e: any) {
+      // 兼容数据库尚未执行升级 SQL（fa_order 缺少 line_items_json）时的查询
+      const msg = String(e?.message || e || '');
+      if (msg.includes('Unknown column') && msg.includes('line_items_json')) {
+        const qb = this.ordersRepo
+          .createQueryBuilder('o')
+          .select([
+            'o.id',
+            'o.orderNo',
+            'o.userId',
+            'o.salesName',
+            'o.salesPhone',
+            'o.companyId',
+            'o.productId',
+            'o.productName',
+            'o.productBrief',
+            'o.productDetail',
+            'o.productCustomer',
+            'o.unitPrice',
+            'o.customerName',
+            'o.customerPhone',
+            'o.customerCompany',
+            'o.whitehatId',
+            'o.whitehatName',
+            'o.whitehatPhone',
+            'o.quantity',
+            'o.amount',
+            'o.discountAmount',
+            'o.payAmount',
+            'o.status',
+            'o.contractStatus',
+            'o.contractUrl',
+            'o.createtime',
+          ])
+          .where('o.userId = :userId AND o.companyId = :companyId', { userId, companyId: user.companyId })
+          .orderBy('o.createtime', 'DESC');
+        if (status)
+          qb.andWhere('o.status = :status', { status });
+        list = await qb.getMany();
+      }
+      else {
+        throw e;
+      }
+    }
+
+    // 为前端提供产品是否已售罄的标记（一次性批量查询产品，避免 N+1）
+    const ids = Array.from(new Set(list.map(o => Number((o as any).productId || 0)).filter(n => n > 0)));
+    const products = await this.productsService.findByIds(ids);
+    const map = new Map<number, any>();
+    for (const p of products) {
+      const inv = (p as any)?.inventory;
+      const soldOut = typeof inv === 'number' ? inv <= 0 : false;
+      map.set(Number((p as any).id), { soldOut });
+    }
+    return list.map((order) => {
+      const pid = Number((order as any).productId || 0);
+      const info = map.get(pid);
+      // 合并单/异常 productId：无法定位产品时不做售罄限制（避免误判全部售罄）
+      const productSoldOut = pid > 0 ? (info ? Boolean(info.soldOut) : true) : false;
+      return { ...order, productSoldOut } as any;
     });
   }
 
-  findById(id: number) {
-    return this.ordersRepo.findOne({ where: { id } });
+  async findById(id: number) {
+    try {
+      return await this.ordersRepo.findOne({ where: { id } });
+    }
+    catch (e: any) {
+      const msg = String(e?.message || e || '');
+      if (msg.includes('Unknown column') && msg.includes('line_items_json')) {
+        return await this.ordersRepo
+          .createQueryBuilder('o')
+          .select([
+            'o.id',
+            'o.orderNo',
+            'o.userId',
+            'o.salesName',
+            'o.salesPhone',
+            'o.companyId',
+            'o.productId',
+            'o.productName',
+            'o.productBrief',
+            'o.productDetail',
+            'o.productCustomer',
+            'o.unitPrice',
+            'o.customerName',
+            'o.customerPhone',
+            'o.customerCompany',
+            'o.whitehatId',
+            'o.whitehatName',
+            'o.whitehatPhone',
+            'o.quantity',
+            'o.amount',
+            'o.discountAmount',
+            'o.payAmount',
+            'o.status',
+            'o.contractStatus',
+            'o.contractUrl',
+            'o.createtime',
+          ])
+          .where('o.id = :id', { id })
+          .getOne();
+      }
+      throw e;
+    }
   }
 
   /**

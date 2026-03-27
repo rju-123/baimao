@@ -52,9 +52,9 @@
         class="submit-btn"
         type="button"
         :disabled="isSoldOut"
-        @tap.stop="goConfirm"
+        @tap.stop="addToCart"
       >
-        立即购买
+        加入购物车
       </button>
     </view>
   </view>
@@ -71,8 +71,11 @@
 <script setup lang="ts">
 import { onLoad } from '@dcloudio/uni-app';
 import { ProductApi } from '@/api';
-import { toast, route } from '@/utils/uni-helpers';
+import { toast } from '@/utils/uni-helpers';
+import useUserStore from '@/store/modules/user';
 
+const CART_STORAGE_KEY = 'sales_cart_items';
+const userStore = useUserStore();
 const product = ref<ProductApi.Product | null>(null);
 const productId = ref<number | null>(null);
 const quantity = ref(1);
@@ -115,6 +118,26 @@ const deliveryText = computed(() => {
   return product.value.deliveryTime;
 });
 
+const unitPrice = computed(() => {
+  if (!product.value) return '0';
+  return formatPrice(product.value.discountPrice ?? product.value.price);
+});
+
+function loadCart(): any[] {
+  try {
+    const raw = uni.getStorageSync(CART_STORAGE_KEY);
+    const arr = typeof raw === 'string' ? JSON.parse(raw) : raw;
+    return Array.isArray(arr) ? arr : [];
+  }
+  catch {
+    return [];
+  }
+}
+
+function saveCart(list: any[]) {
+  uni.setStorageSync(CART_STORAGE_KEY, JSON.stringify(list || []));
+}
+
 async function fetchDetail(id: number) {
   try {
     const res = await ProductApi.getProduct(id);
@@ -143,23 +166,54 @@ function increase() {
   quantity.value += 1;
 }
 
-function goConfirm() {
+async function addToCart() {
+  const userId = Number(userStore.user_id);
+  if (!userId) {
+    toast('请先登录');
+    return;
+  }
   if (!productId.value) {
     toast('参数错误，请返回重新选择');
     return;
   }
-
   if (isSoldOut.value) {
     toast('当前产品已售罄，暂不可下单');
     return;
   }
-
-  const url = `/pages/sales/purchase-confirm/index?productId=${productId.value}&quantity=${quantity.value}`;
-
-  route({
-    type: 'navigateTo',
-    url,
-  });
+  const qty = quantity.value > 0 ? quantity.value : 1;
+  try {
+    const cart = loadCart();
+    const idx = cart.findIndex((i: any) => Number(i.productId) === Number(productId.value));
+    const existingQty = idx >= 0 ? Math.max(0, Number(cart[idx].quantity || 0)) : 0;
+    const latest = await ProductApi.getProduct(Number(productId.value));
+    const latestInventory = Number(latest?.inventory ?? 0);
+    if (latestInventory <= 0) {
+      toast('当前产品已售罄，无法加入购物车');
+      return;
+    }
+    if (existingQty + qty > latestInventory) {
+      toast(`加入失败，购物车已有 ${existingQty} 件，当前库存仅剩 ${latestInventory} 件`);
+      return;
+    }
+    const item = {
+      productId: productId.value,
+      productName: latest?.name || product.value?.name || '',
+      unitPrice: Number((latest?.discountPrice ?? latest?.price ?? unitPrice.value) || '0'),
+      quantity: qty,
+      inventory: latestInventory,
+      soldOut: latestInventory <= 0,
+    };
+    if (idx >= 0) {
+      cart[idx] = { ...cart[idx], ...item, quantity: Number(cart[idx].quantity || 0) + qty };
+    } else {
+      cart.push(item);
+    }
+    saveCart(cart);
+    toast('产品已加入购物车', 'success');
+  }
+  catch (err: any) {
+    toast(err?.message || err?.msg || err?.error || '加入购物车失败');
+  }
 }
 
 onLoad((options: any) => {
@@ -178,22 +232,22 @@ onLoad((options: any) => {
   min-height: 100vh;
   padding: 32rpx 32rpx 120rpx;
   box-sizing: border-box;
-  background-color: #f7f8fa;
+  background: linear-gradient(180deg, var(--theme-bg-gradient-start) 0%, var(--theme-bg-gradient-end) 100%);
 }
 
 .card {
   padding: 28rpx 32rpx 24rpx;
   margin-bottom: 32rpx;
-  border-radius: 24rpx;
+  border-radius: var(--theme-card-radius);
   background-color: #ffffff;
-  box-shadow: 0 10rpx 30rpx rgba(0, 0, 0, 0.04);
+  box-shadow: var(--theme-card-shadow);
 }
 
 .name {
   margin-bottom: 12rpx;
   font-size: 32rpx;
   font-weight: 600;
-  color: #1b233b;
+  color: var(--theme-text-title);
 }
 
 .brief {
@@ -231,7 +285,7 @@ onLoad((options: any) => {
 
 .label {
   font-size: 26rpx;
-  color: #1b233b;
+  color: var(--theme-text-title);
 }
 
 .value {
@@ -259,7 +313,7 @@ onLoad((options: any) => {
   font-size: 32rpx;
   border: none;
   background-color: #f5f6fa;
-  color: #1b233b;
+  color: var(--theme-text-title);
 }
 
 .step-btn:disabled {
@@ -271,7 +325,7 @@ onLoad((options: any) => {
   padding: 0 12rpx;
   text-align: center;
   font-size: 28rpx;
-  color: #1b233b;
+  color: var(--theme-text-title);
   background-color: #ffffff;
 }
 
@@ -279,7 +333,7 @@ onLoad((options: any) => {
   margin-bottom: 12rpx;
   font-size: 28rpx;
   font-weight: 500;
-  color: #1b233b;
+  color: var(--theme-text-title);
 }
 
 .detail {
@@ -310,7 +364,7 @@ onLoad((options: any) => {
   font-size: 30rpx;
   text-align: center;
   color: #ffffff;
-  background-color: #0A7AFF;
+  background-color: #007AFF;
 }
 
 .submit-btn:active {

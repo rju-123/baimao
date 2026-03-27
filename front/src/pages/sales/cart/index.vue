@@ -1,35 +1,37 @@
 <template>
   <view class="page">
-    <view class="header">
-      <view class="title">
-        购物车
-      </view>
-      <view class="sub">
-        支持多商品一次下单
+    <view v-if="items.length" class="cart-header">
+      <view class="cart-title">购物车</view>
+      <view class="edit-toggle" @tap="toggleEdit">
+        {{ isEditing ? '完成' : '编辑' }}
       </view>
     </view>
-
     <view v-if="items.length" class="list">
       <view
         v-for="(item, index) in items"
         :key="`${item.productId}-${index}`"
         class="card item"
+        :class="{ soldout: item.soldOut }"
       >
-        <view class="row top">
-          <view class="name">
-            {{ item.productName || `产品 #${item.productId}` }}
-          </view>
-          <view class="remove" @tap.stop="removeItem(index)">
-            删除
-          </view>
+        <view v-if="isEditing" class="edit-check" @tap="toggleSelect(index)">
+          <view class="checkbox" :class="{ checked: selectedIndexes.has(index) }">✓</view>
         </view>
+        <view class="item-content">
+          <view class="row top">
+            <view class="name">
+              {{ item.productName || `产品 #${item.productId}` }}
+            </view>
+            <view v-if="item.soldOut" class="tag">
+              已售罄
+            </view>
+          </view>
 
-        <view class="row mid">
+          <view v-if="!isEditing" class="row mid">
           <view class="price">
             ￥{{ formatAmount(item.unitPrice) }}
           </view>
           <view class="qty-stepper">
-            <button class="step-btn" :disabled="item.quantity <= 1" @tap="setQty(index, item.quantity - 1)">
+            <button class="step-btn" @tap="setQty(index, item.quantity - 1)">
               －
             </button>
             <view class="qty-display">
@@ -40,18 +42,18 @@
             </button>
           </view>
         </view>
-
-        <view class="coupon" v-if="item.couponId">
-          <text class="coupon-label">优惠券：</text>
-          <text class="coupon-value">{{ item.couponName || `#${item.couponId}` }}</text>
+        <view v-else class="row mid edit-row">
+          <view class="price">￥{{ formatAmount(item.unitPrice) }}</view>
+          <view class="edit-qty">x{{ item.quantity }}</view>
         </view>
 
-        <view class="row bottom">
-          <view class="subtotal-label">
-            小计
-          </view>
-          <view class="subtotal">
-            ￥{{ formatAmount(calcItemPay(item)) }}
+          <view class="row bottom">
+            <view class="subtotal-label">
+              小计
+            </view>
+            <view class="subtotal">
+              ￥{{ formatAmount(calcItemPay(item)) }}
+            </view>
           </view>
         </view>
       </view>
@@ -70,13 +72,27 @@
     </view>
 
     <view v-if="items.length" class="bottom-bar">
-      <view class="total">
-        <text class="total-label">合计</text>
-        <text class="total-value">￥{{ formatAmount(totalPay) }}</text>
-      </view>
-      <button class="checkout-btn" @tap="checkout">
-        去结算
-      </button>
+      <template v-if="!isEditing">
+        <view class="total">
+          <text class="total-label">合计</text>
+          <text class="total-value">￥{{ formatAmount(totalPay) }}</text>
+        </view>
+        <button class="checkout-btn" @tap="checkout">
+          去结算
+        </button>
+      </template>
+      <template v-else>
+        <view class="total">
+          <text class="total-label">已选 {{ selectedIndexes.size }} 件</text>
+        </view>
+        <button
+          class="delete-btn"
+          :disabled="selectedIndexes.size === 0"
+          @tap="batchDelete"
+        >
+          删除
+        </button>
+      </template>
     </view>
   </view>
 </template>
@@ -85,6 +101,7 @@
 import { onShow } from '@dcloudio/uni-app';
 import { toast } from '@/utils/uni-helpers';
 import useUserStore from '@/store/modules/user';
+import { CouponApi, ProductApi } from '@/api';
 
 const CART_STORAGE_KEY = 'sales_cart_items';
 
@@ -96,12 +113,50 @@ interface CartItem {
   couponId?: number | null;
   couponName?: string;
   couponValue?: number;
-  couponType?: string; // amount | discount
+  couponType?: string;
   couponMinAmount?: number;
+  inventory?: number;
+  soldOut?: boolean;
 }
 
 const userStore = useUserStore();
 const items = ref<CartItem[]>([]);
+const isEditing = ref(false);
+const selectedIndexes = ref<Set<number>>(new Set());
+
+function toggleEdit() {
+  isEditing.value = !isEditing.value;
+  if (!isEditing.value)
+    selectedIndexes.value = new Set();
+}
+
+function toggleSelect(index: number) {
+  const next = new Set(selectedIndexes.value);
+  if (next.has(index))
+    next.delete(index);
+  else
+    next.add(index);
+  selectedIndexes.value = next;
+}
+
+async function batchDelete() {
+  const toDelete = Array.from(selectedIndexes.value).sort((a, b) => b - a);
+  if (!toDelete.length) return;
+  const list = loadCart();
+  for (const idx of toDelete) {
+    const item = list[idx];
+    if (item?.couponId)
+      await unlockItemCoupon(item);
+  }
+  for (const idx of toDelete)
+    list.splice(idx, 1);
+  saveCart(list);
+  selectedIndexes.value = new Set();
+  isEditing.value = false;
+  refresh();
+  refreshStocks();
+  toast('已删除');
+}
 
 function goOrder() {
   uni.switchTab({ url: '/pages/sales/order/index' });
@@ -125,21 +180,71 @@ function refresh() {
   items.value = loadCart();
 }
 
-function removeItem(index: number) {
+async function refreshStocks() {
   const list = loadCart();
-  list.splice(index, 1);
-  saveCart(list);
-  refresh();
+  const ids = Array.from(new Set(list.map(i => Number(i.productId || 0)).filter(n => n > 0)));
+  if (!ids.length) {
+    items.value = list;
+    return list;
+  }
+  try {
+    const stocks = await ProductApi.getProductStocks(ids);
+    const map = new Map<number, ProductApi.ProductStock>();
+    for (const s of (stocks || []))
+      map.set(Number(s.id), s);
+    const next = list.map((it) => {
+      const s = map.get(Number(it.productId));
+      const inventory = typeof s?.inventory === 'number' ? s.inventory : 0;
+      const soldOut = inventory <= 0;
+      return { ...it, soldOut, inventory };
+    });
+    items.value = next;
+    saveCart(next);
+    return next;
+  }
+  catch (e) {
+    // 获取库存失败时不阻断使用，保留原购物车展示
+    items.value = list;
+    return list;
+  }
 }
 
-function setQty(index: number, qty: number) {
+async function unlockItemCoupon(item: CartItem) {
+  if (!item?.couponId) return;
+  try {
+    await CouponApi.unlockCoupon(item.couponId, Number(userStore.user_id || 0));
+  }
+  catch (e) {
+    console.warn('unlock coupon failed', e);
+  }
+}
+
+async function setQty(index: number, qty: number) {
   const list = loadCart();
   const item = list[index];
   if (!item) return;
-  item.quantity = Math.max(1, Number(qty || 1));
+  const nextQty = Number(qty || 1);
+
+  if (nextQty <= 0) {
+    await unlockItemCoupon(item);
+    list.splice(index, 1);
+    saveCart(list);
+    refresh();
+    refreshStocks();
+    return;
+  }
+
+  const inventory = Number(item.inventory ?? 0);
+  if (inventory > 0 && nextQty > inventory) {
+    toast(`当前库存仅剩 ${inventory} 件`);
+    item.quantity = inventory;
+  }
+  else {
+    item.quantity = nextQty;
+  }
   list[index] = item;
   saveCart(list);
-  refresh();
+  refreshStocks();
 }
 
 function formatAmount(val: number | string | null | undefined): string {
@@ -189,55 +294,134 @@ async function checkout() {
     toast('购物车为空');
     return;
   }
+  const latestItems = await refreshStocks();
+  // 如果有已售罄商品，禁止进入确认购买页
+  const hasSoldOut = (latestItems || []).some(i => i.soldOut);
+  if (hasSoldOut) {
+    toast('购物车中存在已售罄商品，请先移除后再结算');
+    return;
+  }
+  const hasOverInventory = (latestItems || []).some(i => {
+    const inventory = Number(i.inventory ?? 0);
+    return inventory > 0 && Number(i.quantity || 0) > inventory;
+  });
+  if (hasOverInventory) {
+    toast('购物车中存在超出库存数量的商品，请先调整数量');
+    return;
+  }
   uni.navigateTo({
     url: '/pages/sales/cart-confirm/index',
   });
 }
 
 onShow(() => {
-  refresh();
+  refreshStocks();
 });
 </script>
 
 <style scoped lang="scss">
 .page {
   min-height: 100vh;
-  padding: 24rpx 24rpx 160rpx;
+  padding: 32rpx 32rpx 160rpx;
   box-sizing: border-box;
-  background-color: #f7f8fa;
-}
-
-.header {
-  margin-bottom: 16rpx;
-}
-
-.title {
-  font-size: 34rpx;
-  font-weight: 600;
-  color: #111827;
-}
-
-.sub {
-  margin-top: 6rpx;
-  font-size: 24rpx;
-  color: #6b7280;
+  background: linear-gradient(180deg, var(--theme-bg-gradient-start) 0%, var(--theme-bg-gradient-end) 100%);
 }
 
 .card {
-  padding: 28rpx 28rpx 32rpx;
-  border-radius: 24rpx;
+  padding: 32rpx 32rpx 36rpx;
+  border-radius: var(--theme-card-radius);
   background-color: #ffffff;
-  box-shadow: 0 10rpx 30rpx rgba(0, 0, 0, 0.04);
+  box-shadow: var(--theme-card-shadow);
 }
 
+.soldout {
+  opacity: 0.6;
+}
+
+.tag {
+  flex-shrink: 0;
+  margin-right: 16rpx;
+  padding: 4rpx 10rpx;
+  border-radius: 9999rpx;
+  font-size: 22rpx;
+  color: #b91c1c;
+  background-color: #fee2e2;
+}
 .list {
   display: flex;
   flex-direction: column;
   gap: 16rpx;
 }
 
+.cart-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24rpx 32rpx 16rpx;
+}
+
+.cart-title {
+  font-size: 34rpx;
+  font-weight: 700;
+  color: var(--theme-text-title);
+}
+
+.edit-toggle {
+  font-size: 28rpx;
+  color: #007AFF;
+}
+
 .item {
   padding: 22rpx 24rpx;
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.edit-check {
+  width: 56rpx;
+  height: 56rpx;
+  margin-right: 16rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.checkbox {
+  width: 40rpx;
+  height: 40rpx;
+  border: 2rpx solid #ddd;
+  border-radius: 50%;
+  font-size: 24rpx;
+  color: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.checkbox.checked {
+  border-color: #007AFF;
+  background-color: #007AFF;
+  color: #fff;
+}
+
+.item-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.item .row {
+  width: 100%;
+}
+
+.edit-row {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.edit-qty {
+  font-size: 26rpx;
+  color: var(--theme-text-subtitle);
 }
 
 .row {
@@ -254,16 +438,11 @@ onShow(() => {
   flex: 1;
   font-size: 28rpx;
   font-weight: 600;
-  color: #111827;
+  color: var(--theme-text-title);
   margin-right: 16rpx;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-}
-
-.remove {
-  font-size: 24rpx;
-  color: #ef4444;
 }
 
 .mid {
@@ -279,8 +458,8 @@ onShow(() => {
 .qty-stepper {
   display: flex;
   align-items: center;
-  border-radius: 9999rpx;
-  border: 1rpx solid #e5e6eb;
+  border-radius: var(--theme-btn-radius);
+  border: 1rpx solid #E0E0E0;
   overflow: hidden;
 }
 
@@ -292,7 +471,7 @@ onShow(() => {
   font-size: 32rpx;
   border: none;
   background-color: #f5f6fa;
-  color: #1b233b;
+  color: var(--theme-text-title);
 }
 
 .step-btn:disabled {
@@ -304,23 +483,8 @@ onShow(() => {
   padding: 0 12rpx;
   text-align: center;
   font-size: 28rpx;
-  color: #1b233b;
+  color: var(--theme-text-title);
   background-color: #ffffff;
-}
-
-.coupon {
-  margin-bottom: 12rpx;
-  font-size: 24rpx;
-  color: #6b7280;
-}
-
-.coupon-label {
-  color: #6b7280;
-}
-
-.coupon-value {
-  color: #111827;
-  font-weight: 500;
 }
 
 .bottom {
@@ -330,36 +494,36 @@ onShow(() => {
 
 .subtotal-label {
   font-size: 24rpx;
-  color: #6b7280;
+  color: var(--theme-text-subtitle);
 }
 
 .subtotal {
   font-size: 28rpx;
   font-weight: 600;
-  color: #111827;
+  color: var(--theme-text-title);
 }
 
 .empty-title {
   font-size: 28rpx;
   font-weight: 600;
-  color: #111827;
+  color: var(--theme-text-title);
   margin-bottom: 8rpx;
 }
 
 .empty-sub {
   font-size: 24rpx;
-  color: #6b7280;
+  color: var(--theme-text-subtitle);
   margin-bottom: 20rpx;
 }
 
 .go-btn {
   width: 100%;
-  padding: 18rpx 0;
-  border-radius: 9999rpx;
+  padding: 24rpx 0;
+  border-radius: var(--theme-btn-radius);
   border: none;
   font-size: 28rpx;
   color: #ffffff;
-  background-color: #0A7AFF;
+  background-color: #007AFF;
 }
 
 .go-btn:active {
@@ -371,13 +535,13 @@ onShow(() => {
   left: 0;
   right: 0;
   bottom: 0;
-  padding: 16rpx 24rpx 32rpx;
+  padding: 20rpx 32rpx 40rpx;
   box-sizing: border-box;
-  background-color: rgba(247, 248, 250, 0.98);
-  box-shadow: 0 -4rpx 12rpx rgba(15, 23, 42, 0.04);
+  background-color: rgba(248, 248, 248, 0.98);
+  box-shadow: 0 -10rpx 30rpx rgba(0, 122, 255, 0.06);
   display: flex;
   align-items: center;
-  gap: 16rpx;
+  gap: 20rpx;
 }
 
 .total {
@@ -388,27 +552,40 @@ onShow(() => {
 
 .total-label {
   font-size: 22rpx;
-  color: #6b7280;
+  color: var(--theme-text-subtitle);
 }
 
 .total-value {
   margin-top: 2rpx;
   font-size: 30rpx;
   font-weight: 700;
-  color: #111827;
+  color: var(--theme-text-title);
 }
 
 .checkout-btn {
-  padding: 18rpx 28rpx;
-  border-radius: 9999rpx;
+  padding: 24rpx 36rpx;
+  border-radius: var(--theme-btn-radius);
   border: none;
   font-size: 28rpx;
   color: #ffffff;
-  background-color: #0A7AFF;
+  background-color: #007AFF;
 }
 
 .checkout-btn:active {
   opacity: 0.9;
+}
+
+.delete-btn {
+  padding: 24rpx 36rpx;
+  border-radius: var(--theme-btn-radius);
+  border: none;
+  font-size: 28rpx;
+  color: #fff;
+  background-color: #ef4444;
+}
+
+.delete-btn:disabled {
+  opacity: 0.5;
 }
 </style>
 

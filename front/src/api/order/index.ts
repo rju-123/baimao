@@ -11,6 +11,8 @@ export interface Order {
   productDetail: string;
   /** 产品客户（后台创建产品时填写的 customer，订单列表“客户”展示用） */
   productCustomer?: string;
+  /** 订单行明细快照（用于合并单展示多个客户/合同表格） */
+  lineItemsJson?: any[] | null;
   unitPrice: number;
   customerName: string;
   customerPhone: string;
@@ -30,6 +32,8 @@ export interface Order {
   discountAmount: number;
   payAmount: number;
   status: string;
+  /** 产品是否已售罄（由后端根据库存/状态计算） */
+  productSoldOut?: boolean;
   /** 后端 MySQL 返回的 Unix 时间戳（秒） */
   createtime?: number | null;
   /** 兼容旧字段，部分环境可能为 ISO 字符串 */
@@ -52,6 +56,10 @@ export const createOrder = (data: CreateOrderReq) =>
 
 export const getOrder = (id: number) =>
   get<Order>(`/orders/${id}`);
+
+/** 生成或刷新订单电子合同（详情页无合同时自动调用） */
+export const generateContract = (orderId: number) =>
+  post<{ contractUrl: string }>(`/orders/${orderId}/generate-contract`, { data: {} });
 
 export interface ListOrdersParams {
   userId: number;

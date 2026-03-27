@@ -15,16 +15,17 @@ import { Product } from './products/product.entity';
 import { Order } from './orders/order.entity';
 import { Address } from './addresses/address.entity';
 import { Coupon } from './coupons/coupon.entity';
+import { CouponTemplate } from './coupons/coupon-template.entity';
 import { PointsMallItem } from './points/points-mall-item.entity';
 import { ExchangeRecord } from './points/exchange-record.entity';
 import { PointsCode } from './points/points-code.entity';
 import { KnowledgeArticle } from './knowledge/knowledge.entity';
-import { PartnerInvoice } from './partner/partner-invoice.entity';
 import { PartnerModule } from './partner/partner.module';
 import { Sales } from './sales/sales.entity';
 import { SalesModule } from './sales/sales.module';
 import { KnowledgeModule } from './knowledge/knowledge.module';
 import { EsignModule } from './esign/esign.module';
+import { CommonModule } from './common/common.module';
 
 @Module({
   imports: [
@@ -32,7 +33,7 @@ import { EsignModule } from './esign/esign.module';
     TypeOrmModule.forRoot({
       type: 'better-sqlite3',
       database: 'database.sqlite',
-      entities: [User, Address, Coupon, PartnerInvoice],
+      entities: [User, Address],
       synchronize: true,
     }),
     // 第二个连接：连接到后台管理系统使用的 MySQL，专门用于产品、订单、公司、销售与积分商城
@@ -44,7 +45,7 @@ import { EsignModule } from './esign/esign.module';
       username: 'root',
       password: 'admin123',
       database: 'baimao_admin',
-      entities: [Product, Order, Company, Sales, PointsMallItem, ExchangeRecord, PointsCode, KnowledgeArticle],
+      entities: [Product, Order, Company, Sales, PointsMallItem, ExchangeRecord, PointsCode, KnowledgeArticle, Coupon, CouponTemplate],
       synchronize: false,
     }),
     UsersModule,
@@ -58,6 +59,7 @@ import { EsignModule } from './esign/esign.module';
     SalesModule,
     KnowledgeModule,
     EsignModule,
+    CommonModule,
   ],
   controllers: [AppController],
   providers: [AppService],

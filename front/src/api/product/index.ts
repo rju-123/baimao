@@ -3,7 +3,7 @@ import { get } from '@/utils/request';
 export interface Product {
   id: number;
   name: string;
-  type: 'service' | 'product';
+  type: 'redteam' | 'pentest' | 'other' | string;
   category: string;
   brief: string;
   detail: string;
@@ -27,4 +27,6 @@ export const listProducts = (query?: { type?: string; status?: string }) => {
 
 export const getProduct = (id: number) =>
   get<Product>(`/products/${id}`);
+
+export * from './stocks';
 

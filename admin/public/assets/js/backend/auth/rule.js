@@ -10,6 +10,7 @@ define(['jquery', 'bootstrap', 'backend', 'table', 'form', 'template'], function
                     "edit_url": "auth/rule/edit",
                     "del_url": "auth/rule/del",
                     "multi_url": "auth/rule/multi",
+                    "dragsort_url": "auth/rule/dragsort",
                     "table": "auth_rule"
                 }
             });

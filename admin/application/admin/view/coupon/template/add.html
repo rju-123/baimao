@@ -1,0 +1,72 @@
+<form id="add-form" class="form-horizontal" role="form" data-toggle="validator" method="POST" action="">
+    {:token()}
+    <div class="form-group">
+        <label for="c-code" class="control-label col-xs-12 col-sm-2">优惠券编号:</label>
+        <div class="col-xs-12 col-sm-4">
+            <input id="c-code" class="form-control" name="row[code]" type="text" value="" placeholder="留空自动生成CPN001格式">
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="c-name" class="control-label col-xs-12 col-sm-2">优惠券名称:</label>
+        <div class="col-xs-12 col-sm-4">
+            <input id="c-name" data-rule="required" class="form-control" name="row[name]" type="text" value="">
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="c-type" class="control-label col-xs-12 col-sm-2">优惠类型:</label>
+        <div class="col-xs-12 col-sm-4">
+            <select id="c-type" class="form-control" name="row[type]">
+                <option value="amount">满减</option>
+                <option value="discount">折扣</option>
+                <option value="direct">直减</option>
+            </select>
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="c-value" class="control-label col-xs-12 col-sm-2">优惠金额/折扣:</label>
+        <div class="col-xs-12 col-sm-4">
+            <input id="c-value" data-rule="required;number" class="form-control" name="row[value]" type="text" value="" placeholder="满减/直减填金额，折扣填0.9表示9折">
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="c-minAmount" class="control-label col-xs-12 col-sm-2">使用门槛:</label>
+        <div class="col-xs-12 col-sm-4">
+            <input id="c-minAmount" data-rule="required;number" class="form-control" name="row[minAmount]" type="text" value="0" placeholder="0表示无门槛">
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="c-validFrom" class="control-label col-xs-12 col-sm-2">有效期开始:</label>
+        <div class="col-xs-12 col-sm-4">
+            <input id="c-validFrom" data-rule="required" class="form-control" name="row[validFrom]" type="datetime-local" value="">
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="c-validTo" class="control-label col-xs-12 col-sm-2">有效期结束:</label>
+        <div class="col-xs-12 col-sm-4">
+            <input id="c-validTo" data-rule="required" class="form-control" name="row[validTo]" type="datetime-local" value="">
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="c-totalQuantity" class="control-label col-xs-12 col-sm-2">计划发放总量:</label>
+        <div class="col-xs-12 col-sm-4">
+            <input id="c-totalQuantity" data-rule="required;integer" class="form-control" name="row[totalQuantity]" type="number" value="100">
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="c-status" class="control-label col-xs-12 col-sm-2">状态:</label>
+        <div class="col-xs-12 col-sm-4">
+            <select id="c-status" class="form-control" name="row[status]">
+                <option value="not_started">未开始</option>
+                <option value="in_progress">进行中</option>
+                <option value="ended">已结束</option>
+            </select>
+        </div>
+    </div>
+    <div class="form-group layer-footer">
+        <label class="control-label col-xs-12 col-sm-2"></label>
+        <div class="col-xs-12 col-sm-8">
+            <button type="submit" class="btn btn-primary btn-embossed disabled">确定</button>
+            <button type="reset" class="btn btn-default btn-embossed">重置</button>
+        </div>
+    </div>
+</form>

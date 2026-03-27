@@ -5,13 +5,32 @@ import { CouponsService } from './coupons.service';
 export class CouponsController {
   constructor(private readonly couponsService: CouponsService) {}
 
+  /** 调试接口：返回查询参数与优惠券数量，便于排查 */
+  @Get('debug')
+  async debug(@Query('userId') userId: string) {
+    const uid = Number(userId);
+    if (!userId || Number.isNaN(uid) || uid <= 0) {
+      return { code: 400, message: '缺少有效的 userId', result: null };
+    }
+    const info = await this.couponsService.getDebugInfo(uid);
+    return { code: 200, message: 'OK', result: info };
+  }
+
   @Get()
   async list(
     @Query('userId') userId: string,
     @Query('status') status?: string,
   ) {
+    const uid = Number(userId);
+    if (!userId || Number.isNaN(uid) || uid <= 0) {
+      return {
+        code: 400,
+        message: '缺少有效的 userId',
+        result: [],
+      };
+    }
     await this.couponsService.expireOverdue();
-    const data = await this.couponsService.findByUser(Number(userId), status);
+    const data = await this.couponsService.findByUser(uid, status);
     return {
       code: 200,
       message: 'OK',

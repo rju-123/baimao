@@ -1,12 +1,21 @@
 <script type="text/javascript">
-    // 覆盖自定义后台模块的 RequireJS 路径到本地，避免从 CDN 加载 404
-    window.require = window.require || {};
-    window.require.paths = Object.assign({
-        'backend/product/product': '/assets/js/backend/product/product',
-        'backend/order/order': '/assets/js/backend/order/order',
-        'backend/whitehat/whitehat': '/assets/js/backend/whitehat/whitehat',
-        'backend/company/company': '/assets/js/backend/company/company',
-        'backend/sales/sales': '/assets/js/backend/sales/sales'
-    }, window.require.paths || {});
+    // 合并自定义后台模块的 RequireJS 路径，使用独立变量避免覆盖 require 导致 require.config is not a function
+    (function () {
+        window.__requireExtraPaths = {
+            'table': 'require-table',
+            'form': 'require-form',
+            'backend/product/product': '/assets/js/backend/product/product',
+            'backend/order/order': '/assets/js/backend/order/order',
+            'backend/whitehat/whitehat': '/assets/js/backend/whitehat/whitehat',
+            'backend/company/company': '/assets/js/backend/company/company',
+            'backend/sales/sales': '/assets/js/backend/sales/sales',
+            'backend/coupon/template': '/assets/js/backend/coupon/template',
+            'backend/knowledge/article': '/assets/js/backend/knowledge/article',
+            'backend/points/mallitem': '/assets/js/backend/points/mallitem',
+            'backend/points/exchange': '/assets/js/backend/points/exchange',
+            'backend/points/codebatch': '/assets/js/backend/points/codebatch',
+            'backend/finance/finance': '/assets/js/backend/finance/finance'
+        };
+    })();
 </script>
 <script src="__CDN__/assets/js/require.min.js" data-main="__CDN__/assets/js/require-backend{$Think.config.app_debug?'':'.min'}.js?v={$site.version|htmlentities}"></script>

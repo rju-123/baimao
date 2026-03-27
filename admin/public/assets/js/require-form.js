@@ -174,7 +174,7 @@ define(['jquery', 'bootstrap', 'upload', 'validator', 'validator-lang'], functio
                 //绑定日期时间元素事件
                 if ($(".datetimepicker", form).length > 0) {
                     require(['bootstrap-datetimepicker'], function () {
-                        var options = {
+                        var defaultOptions = {
                             format: 'YYYY-MM-DD HH:mm:ss',
                             icons: {
                                 time: 'fa fa-clock-o',
@@ -190,9 +190,19 @@ define(['jquery', 'bootstrap', 'upload', 'validator', 'validator-lang'], functio
                             showTodayButton: true,
                             showClose: true
                         };
-                        $('.datetimepicker', form).parent().css('position', 'relative');
-                        $('.datetimepicker', form).datetimepicker(options).on('dp.change', function (e) {
-                            $(this, document).trigger("changed");
+                        $('.datetimepicker', form).each(function () {
+                            var $el = $(this);
+                            var opts = $.extend(true, {}, defaultOptions);
+                            if ($el.data('dateFormat')) {
+                                opts.format = $el.data('dateFormat');
+                            }
+                            if ($el.data('useCurrent')) {
+                                opts.useCurrent = $el.data('useCurrent');
+                            }
+                            $el.parent().css('position', 'relative');
+                            $el.datetimepicker(opts).on('dp.change', function (e) {
+                                $(this, document).trigger("changed");
+                            });
                         });
                     });
                 }

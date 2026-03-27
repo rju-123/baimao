@@ -17,12 +17,15 @@ export class SalesService {
     phone: string,
     name?: string,
     companyId?: number | null,
+    isAdmin?: boolean,
   ): Promise<Sales> {
     const now = Math.floor(Date.now() / 1000);
     let row = await this.salesRepo.findOne({ where: { phone } });
     if (row) {
       if (name !== undefined) row.name = name;
       if (companyId !== undefined) row.companyId = companyId ?? null;
+      if (isAdmin !== undefined)
+        row.isAdmin = isAdmin ? 1 : 0;
       row.updatetime = now;
       return this.salesRepo.save(row);
     }
@@ -30,6 +33,7 @@ export class SalesService {
       phone,
       name: name ?? '',
       companyId: companyId ?? null,
+      isAdmin: isAdmin ? 1 : 0,
       createtime: now,
       updatetime: now,
     });

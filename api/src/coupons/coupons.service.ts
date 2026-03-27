@@ -1,58 +1,77 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { LessThan } from 'typeorm';
 import { Coupon } from './coupon.entity';
 import { Repository } from 'typeorm';
+import { UsersService } from '../users/users.service';
+import { SalesService } from '../sales/sales.service';
 
 @Injectable()
-export class CouponsService implements OnModuleInit {
+export class CouponsService {
   constructor(
-    @InjectRepository(Coupon)
+    @InjectRepository(Coupon, 'mysql')
     private readonly couponsRepo: Repository<Coupon>,
+    private readonly usersService: UsersService,
+    private readonly salesService: SalesService,
   ) {}
 
-  async onModuleInit() {
-    const count = await this.couponsRepo.count();
-    if (count === 0) {
-      const now = new Date();
-      const end = new Date(now.getTime() + 15 * 24 * 60 * 60 * 1000);
-      const seed: Partial<Coupon>[] = [
-        {
-          userId: 1,
-          name: '满1000减100券',
-          type: 'amount',
-          value: 100,
-          minAmount: 1000,
-          validFrom: now,
-          validTo: end,
-          status: 'available',
-          lockedByUserId: null,
-          lockedForProductId: null,
-          lockedAt: null,
-        },
-        {
-          userId: 1,
-          name: '全场9折券',
-          type: 'discount',
-          value: 0.9,
-          minAmount: 0,
-          validFrom: now,
-          validTo: end,
-          status: 'available',
-          lockedByUserId: null,
-          lockedForProductId: null,
-          lockedAt: null,
-        },
-      ];
-      await this.couponsRepo.save(this.couponsRepo.create(seed));
+  /** 调试用：返回查询参数与优惠券数量 */
+  async getDebugInfo(userId: number) {
+    const user = await this.usersService.findById(userId);
+    if (!user)
+      return { user: null, companyIds: [], couponCount: 0 };
+    const companyIds: number[] = [];
+    if (user.companyId)
+      companyIds.push(user.companyId);
+    let salesCompanyId: number | null = null;
+    if (user.phone) {
+      const sales = await this.salesService.findByPhone(user.phone);
+      if (sales?.companyId) {
+        salesCompanyId = sales.companyId;
+        if (!companyIds.includes(sales.companyId))
+          companyIds.push(sales.companyId);
+      }
     }
+    let couponCount = 0;
+    if (companyIds.length > 0) {
+      couponCount = await this.couponsRepo
+        .createQueryBuilder('c')
+        .where('c.companyId IN (:...companyIds)', { companyIds })
+        .andWhere('(c.userId IS NULL OR c.userId = :userId)', { userId })
+        .getCount();
+    }
+    return {
+      userId,
+      userCompanyId: user.companyId,
+      salesCompanyId,
+      companyIds,
+      couponCount,
+    };
   }
 
-  findByUser(userId: number, status?: string) {
-    const where: any = { userId };
+  async findByUser(userId: number, status?: string) {
+    const user = await this.usersService.findById(userId);
+    if (!user)
+      return [];
+    // 合并用户表与销售表的 companyId，确保能查到后台分配的优惠券
+    const companyIds: number[] = [];
+    if (user.companyId)
+      companyIds.push(user.companyId);
+    if (user.phone) {
+      const sales = await this.salesService.findByPhone(user.phone);
+      if (sales?.companyId && !companyIds.includes(sales.companyId))
+        companyIds.push(sales.companyId);
+    }
+    if (companyIds.length === 0)
+      return [];
+    await this.expireOverdue();
+    const qb = this.couponsRepo.createQueryBuilder('c')
+      .where('c.companyId IN (:...companyIds)', { companyIds })
+      .andWhere('(c.userId IS NULL OR c.userId = :userId)', { userId });
     if (status)
-      where.status = status;
-    return this.couponsRepo.find({ where, order: { validTo: 'ASC' } });
+      qb.andWhere('c.status = :status', { status });
+    qb.orderBy('c.validTo', 'ASC');
+    return qb.getMany();
   }
 
   async markUsed(id: number) {
@@ -67,11 +86,27 @@ export class CouponsService implements OnModuleInit {
   }
 
   async lockCoupon(id: number, userId: number, productId?: number | null) {
+    const user = await this.usersService.findById(userId);
+    if (!user)
+      throw new Error('用户不存在');
+    const companyIds: number[] = [];
+    if (user.companyId)
+      companyIds.push(user.companyId);
+    if (user.phone) {
+      const sales = await this.salesService.findByPhone(user.phone);
+      if (sales?.companyId && !companyIds.includes(sales.companyId))
+        companyIds.push(sales.companyId);
+    }
+    if (companyIds.length === 0)
+      throw new Error('用户未关联公司');
     const coupon = await this.couponsRepo.findOne({ where: { id } });
     if (!coupon)
       throw new Error('优惠券不存在');
+    if (!companyIds.includes(coupon.companyId))
+      throw new Error('无权使用该优惠券');
+    if (coupon.userId != null && coupon.userId !== userId)
+      throw new Error('该优惠券已分配给其他用户');
     await this.expireOverdue();
-    // 仅允许锁定可用券；如果已被同一用户锁定也认为成功（幂等）
     if (coupon.status === 'locked') {
       if (coupon.lockedByUserId === userId)
         return coupon;

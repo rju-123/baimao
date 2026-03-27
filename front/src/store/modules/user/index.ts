@@ -19,6 +19,23 @@ const useUserStore = defineStore('user', {
     },
   },
   actions: {
+    /**
+     * 规范化 user_id，避免历史缓存为 13 位时间戳导致后端查询/落库异常
+     */
+    normalizeUserId() {
+      const raw = Number(this.user_id || 0);
+      // MySQL int unsigned max: 4294967295
+      if (!Number.isFinite(raw) || raw <= 0) {
+        this.setInfo({ user_id: '', partnerRejectedAcknowledged: false });
+        return;
+      }
+      if (raw > 4294967295) {
+        // 兼容历史缓存为毫秒时间戳（13 位），转换为秒级时间戳（10 位）
+        const sec = Math.floor(raw / 1000);
+        const safe = sec > 0 && sec <= 4294967295 ? String(sec) : '';
+        this.setInfo({ user_id: safe, partnerRejectedAcknowledged: false });
+      }
+    },
     // 设置用户的信息
     setInfo(partial: Partial<UserState>) {
       this.$patch(partial);
@@ -34,13 +51,14 @@ const useUserStore = defineStore('user', {
     },
     /** 根据当前 user_id 从后端拉取最新用户信息（含积分），更新 store */
     async refreshUserInfo() {
+      this.normalizeUserId();
       const id = this.user_id;
       if (!id)
         return;
       try {
         const user = await UserApi.getUser(Number(id));
         this.setInfo({
-          user_name: user.name || user.phone,
+          user_name: user.name || '',
           phone: user.phone,
           companyId: user.companyId ?? undefined,
           isAdmin: (user as any).isAdmin ?? false,
@@ -62,7 +80,8 @@ const useUserStore = defineStore('user', {
           // 同步基础用户信息到 store，方便前端使用
           this.setInfo({
             user_id: String(res.user.id),
-            user_name: res.user.name || res.user.phone,
+            // user_name 用于展示“姓名”；手机号单独放在 phone 字段
+            user_name: res.user.name || '',
             phone: res.user.phone,
             companyId: res.user.companyId,
             isAdmin: res.user.isAdmin,
@@ -72,6 +91,7 @@ const useUserStore = defineStore('user', {
             // 默认使用后端角色作为当前角色，后续在角色选择页可再覆盖
             currentRole: (res.user.role as any) || 'sales',
           });
+          this.normalizeUserId();
           resolve(res);
         }).catch((error) => {
           reject(error);
@@ -91,7 +111,9 @@ const useUserStore = defineStore('user', {
           provider,
           success: (_result: UniApp.LoginRes) => {
             // 当前后端未实现 /user/loginByCode，使用本地模拟登录，避免 404
-            const mockUserId = this.user_id || String(Date.now());
+            this.normalizeUserId();
+            // 快捷登录：给一个合法范围内的“秒级时间戳”作为临时 user_id，避免所有人共享同一个 id
+            const mockUserId = this.user_id || String(Math.floor(Date.now() / 1000));
             const mockToken = this.token || 'quick-login';
 
             setToken(mockToken);
@@ -100,7 +122,9 @@ const useUserStore = defineStore('user', {
               user_id: mockUserId,
               user_name: this.user_name || '快捷登录用户',
               token: mockToken,
-              currentRole: this.currentRole || 'sales',
+              // 强制回到身份选择页，不沿用上次角色，避免直接跳入 partner 的 rejected/pending 页面
+              currentRole: '',
+              partnerRejectedAcknowledged: false,
             });
 
             resolve({

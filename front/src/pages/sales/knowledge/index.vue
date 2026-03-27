@@ -128,27 +128,27 @@ onShow(() => {
 <style scoped lang="scss">
 .page {
   min-height: 100vh;
-  padding: 24rpx 24rpx 32rpx;
+  padding: 32rpx 32rpx 40rpx;
   box-sizing: border-box;
-  background-color: #f7f8fa;
+  background: linear-gradient(180deg, var(--theme-bg-gradient-start) 0%, var(--theme-bg-gradient-end) 100%);
 }
 
 .search-wrapper {
-  margin-bottom: 16rpx;
+  margin-bottom: 20rpx;
 }
 
 .search-box {
   display: flex;
   align-items: center;
-  padding: 20rpx 24rpx;
-  border-radius: 9999rpx;
+  padding: 24rpx 28rpx;
+  border-radius: 24rpx;
   background-color: #f2f2f7;
 }
 
 .search-icon {
   margin-right: 12rpx;
   font-size: 26rpx;
-  color: #8e8e93;
+  color: var(--theme-text-subtitle);
 }
 
 .search-input {
@@ -158,12 +158,12 @@ onShow(() => {
 
 .search-btn {
   margin-left: 12rpx;
-  padding: 6rpx 20rpx;
-  border-radius: 9999rpx;
+  padding: 8rpx 24rpx;
+  border-radius: var(--theme-btn-radius);
   border: none;
   font-size: 24rpx;
   color: #ffffff;
-  background-color: #0a7aff;
+  background-color: #007AFF;
 }
 
 .list {
@@ -171,23 +171,23 @@ onShow(() => {
 }
 
 .article-card {
-  padding: 20rpx 24rpx;
-  margin-bottom: 16rpx;
-  border-radius: 20rpx;
+  padding: 28rpx 32rpx;
+  margin-bottom: 20rpx;
+  border-radius: var(--theme-card-radius);
   background-color: #ffffff;
-  box-shadow: 0 4rpx 12rpx rgba(15, 23, 42, 0.04);
+  box-shadow: var(--theme-card-shadow);
 }
 
 .article-title {
   font-size: 30rpx;
   font-weight: 600;
-  color: #111827;
+  color: var(--theme-text-title);
   margin-bottom: 8rpx;
 }
 
 .article-summary {
   font-size: 24rpx;
-  color: #6b7280;
+  color: var(--theme-text-subtitle);
 }
 
 .empty {

@@ -20,8 +20,29 @@ export class CompaniesController {
 
   @Post()
   async create(@Body() body: any) {
-    const dto = plainToInstance(CreateCompanyDto, body);
-    await validateOrReject(dto);
+    // 兼容前端请求体可能为 `{ data: {...} }` 或直接 `{...}`
+    const payload = body?.data ?? body;
+    // 统一把可能的 number 字段转成 string，并去掉首尾空格，避免 class-validator 的类型校验失败
+    const normalized = {
+      name: String(payload?.name ?? '').trim(),
+      creditCode: String(payload?.creditCode ?? '').trim(),
+      address: String(payload?.address ?? '').trim(),
+      contactName: String(payload?.contactName ?? '').trim(),
+      contactPhone: String(payload?.contactPhone ?? '').trim(),
+    };
+
+    const dto = plainToInstance(CreateCompanyDto, normalized);
+    try {
+      await validateOrReject(dto);
+    }
+    catch {
+      return {
+        code: 400,
+        message: '参数校验失败，请检查公司信息是否填写完整且格式正确',
+        result: null,
+      };
+    }
+
     const company = await this.companiesService.create(dto);
     return {
       code: 200,

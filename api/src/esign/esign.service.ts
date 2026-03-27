@@ -77,7 +77,7 @@ export class EsignService {
     return { flowId };
   }
 
-  async getFlow(flowId: string) {
+  async getFlow(flowId: string): Promise<any> {
     const flow = this.flows.get(flowId);
     if (!flow)
       throw new Error('签署流程不存在或已过期');
@@ -115,6 +115,15 @@ export class EsignService {
 
     // 计算金额与汇总字段
     const parts: string[] = [];
+    const lineItems: Array<{
+      index: number;
+      name: string;
+      desc: string;
+      customer: string;
+      quantity: number;
+      unitPrice: number;
+      lineTotal: number;
+    }> = [];
     let totalAmount = 0;
     let totalDiscount = 0;
 
@@ -141,6 +150,15 @@ export class EsignService {
       }
       totalDiscount += discount;
       parts.push(`${product.name}x${it.quantity}`);
+      lineItems.push({
+        index: lineItems.length + 1,
+        name: String(product.name ?? '').trim() || '—',
+        desc: String(product.brief ?? '').trim() || '—',
+        customer: String((product as any)?.customer ?? '').trim() || '',
+        quantity: Math.max(1, Number(it.quantity || 1)),
+        unitPrice: Number(unit || 0),
+        lineTotal: Number(amount || 0),
+      });
     }
 
     const itemsSummary = parts.join('，');
@@ -160,6 +178,7 @@ export class EsignService {
       companyId,
       firstProductId,
       itemsSummary,
+      lineItemsJson: lineItems as any,
       amount: totalAmount,
       discountAmount: totalDiscount,
       payAmount,

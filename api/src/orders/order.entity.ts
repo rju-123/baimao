@@ -101,6 +101,13 @@ export class Order {
   @Column({ name: 'contract_url', type: 'varchar', length: 255, default: '' })
   contractUrl: string;
 
+  /**
+   * 订单行明细（用于合同表格按行渲染）。
+   * 单品订单建议也写入一条长度为 1 的数组；合并单写入多条。
+   */
+  @Column({ name: 'line_items_json', type: 'json', nullable: true })
+  lineItemsJson?: any | null;
+
   @Column({ name: 'createtime', type: 'int', nullable: true })
   createtime: number | null;
 }

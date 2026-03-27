@@ -4,9 +4,21 @@ import { requestInterceptors, responseInterceptors } from './interceptors';
 
 const http = new Request();
 
+/** 小程序/部分环境对 localhost 解析不稳定，统一为 IPv4 环回 */
+function normalizeApiBaseUrl(raw: string | undefined): string {
+  if (!raw || typeof raw !== 'string')
+    return '';
+  let u = raw.trim();
+  if (!u)
+    return '';
+  u = u.replace(/^http:\/\/localhost/i, 'http://127.0.0.1');
+  u = u.replace(/^https:\/\/localhost/i, 'https://127.0.0.1');
+  return u;
+}
+
 export function setupRequest() {
   http.setConfig((defaultConfig: any) => {
-    defaultConfig.baseURL = import.meta.env.VITE_API_BASE_URL;
+    defaultConfig.baseURL = normalizeApiBaseUrl(import.meta.env.VITE_API_BASE_URL);
     // #ifdef H5
     if (import.meta.env.VITE_APP_PROXY === 'true') {
       defaultConfig.baseURL = import.meta.env.VITE_API_PREFIX;
@@ -21,7 +33,7 @@ export function setupRequest() {
 export function request<T = any>(config: any): Promise<T> {
   return new Promise((resolve, reject) => {
     http.request(config).then((res: any) => {
-      const { result } = res.data as IResponse<T>;
+      const { result } = (res?.data || {}) as IResponse<T>;
       resolve(result as T);
     }).catch(reject);
   });
