@@ -33,7 +33,7 @@
             商品
           </text>
           <text class="value">
-            商品 #{{ record?.itemId }}
+            {{ recordItemName }}
           </text>
         </view>
         <view class="row">
@@ -65,7 +65,7 @@
             兑换时间
           </text>
           <text class="value">
-            {{ record?.createdAt }}
+            {{ formatExchangeDate(record?.createdAt) }}
           </text>
         </view>
       </view>
@@ -89,13 +89,14 @@
         <view class="section-header">
           兑换码
         </view>
-        <view class="code-row" @click="copyCode">
+        <view class="code-row">
           <text class="code-value">
             {{ record?.code || '暂未生成' }}
           </text>
+          <text v-if="record?.code" class="copy-icon" @tap.stop="copyCode">复制</text>
         </view>
         <view class="code-tip">
-          点击兑换码可以复制到剪贴板
+          点击右侧复制可复制到剪贴板
         </view>
       </view>
     </view>
@@ -110,6 +111,26 @@ import type { ExchangeRecord } from '@/api/points';
 
 const loading = ref(false);
 const record = ref<ExchangeRecord | null>(null);
+
+const recordItemName = computed(() => {
+  const r = record.value;
+  if (!r)
+    return '';
+  const n = String((r as any)?.itemName ?? '').trim();
+  return n || `商品 #${r.itemId}`;
+});
+
+function formatExchangeDate(raw: any): string {
+  if (!raw)
+    return '—';
+  const d = raw instanceof Date ? raw : new Date(String(raw));
+  if (Number.isNaN(d.getTime()))
+    return '—';
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}.${m}.${day}`;
+}
 
 const loadRecord = async (id: number) => {
   loading.value = true;
@@ -267,11 +288,27 @@ onLoad((options: Record<string, any>) => {
   padding: 12rpx;
   border-radius: 8rpx;
   background-color: #f5f5f5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .code-value {
   font-size: 26rpx;
+  flex: 1;
   text-align: center;
+  margin-right: 16rpx;
+  word-break: break-all;
+}
+
+.copy-icon {
+  flex-shrink: 0;
+  font-size: 24rpx;
+  padding: 6rpx 16rpx;
+  border-radius: 8rpx;
+  border: 1rpx solid #007AFF;
+  color: #007AFF;
+  background-color: #ffffff;
 }
 
 .code-tip {

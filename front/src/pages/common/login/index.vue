@@ -11,9 +11,22 @@
       </view>
 
       <view class="btn-group">
+        <!-- #ifdef MP-WEIXIN -->
+        <button
+          class="primary-btn"
+          open-type="getPhoneNumber"
+          @getphonenumber="handleWxPhoneLogin"
+        >
+          快捷登录
+        </button>
+        <!-- #endif -->
+
+        <!-- #ifndef MP-WEIXIN -->
         <button class="primary-btn" @tap="handleQuickLogin">
           快捷登录
         </button>
+        <!-- #endif -->
+
         <button class="ghost-btn" @tap="handleCodeLogin">
           通过手机验证码登录
         </button>
@@ -52,6 +65,32 @@ async function handleQuickLogin() {
   }
   catch (err: any) {
     const message = err?.message || err?.msg || err?.error || '快捷登录失败，请稍后再试';
+    toast(message);
+  }
+}
+
+async function handleWxPhoneLogin(e: any) {
+  const detail = e?.detail ?? {};
+  // 用户拒绝授权或调用失败
+  if (!detail || !detail.code || (typeof detail.errMsg === 'string' && !detail.errMsg.includes('ok'))) {
+    if (typeof detail.errMsg === 'string' && detail.errMsg.includes('fail user deny')) {
+      toast('已取消微信手机号授权');
+    }
+    else {
+      toast('微信手机号授权失败，请重试或使用验证码登录');
+    }
+    return;
+  }
+
+  try {
+    await userStore.wechatPhoneLogin(detail.code as string);
+    toast('登录成功', 'success');
+    setTimeout(() => {
+      route({ type: 'redirectTo', url: '/pages/common/role-selection/index' });
+    }, 400);
+  }
+  catch (err: any) {
+    const message = err?.message || err?.msg || err?.error || '微信手机号快捷登录失败，请稍后再试';
     toast(message);
   }
 }

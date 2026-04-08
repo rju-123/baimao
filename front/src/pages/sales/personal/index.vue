@@ -92,8 +92,17 @@ import { CompanyApi, OrderApi, UserApi } from '@/api';
 import { get } from '@/utils/request';
 import type { Order } from '@/api/order';
 import useUserStore from '@/store/modules/user';
+import { getToken, parseUserIdFromMockToken } from '@/utils/auth';
 
 const userStore = useUserStore();
+
+/** 本地会话用户 ID：优先 store，其次 mock-token-{id} */
+function resolveSessionUserId(): number {
+  const fromStore = Number(userStore.user_id || 0);
+  if (fromStore > 0)
+    return fromStore;
+  return parseUserIdFromMockToken(getToken());
+}
 
 const ongoingOrdersCount = ref(0);
 const couponCount = ref(0);
@@ -102,7 +111,16 @@ const pointsDisplay = ref<number>(userStore.points ?? 0);
 // 是否为公司管理员：直接在本页维护，确保与后端返回保持一致
 const isCompanyAdmin = ref(false);
 
-const displayName = computed(() => userStore.user_name || userStore.phone || '未登录用户');
+/** 姓名为空时用手机号展示（后端常返回 name:""、phone 有值） */
+const displayName = computed(() => {
+  const name = String(userStore.user_name ?? '').trim();
+  const phone = String(userStore.phone ?? '').trim();
+  if (name)
+    return name;
+  if (phone)
+    return phone;
+  return '未登录用户';
+});
 
 const AVATAR_STORAGE_KEY = 'user_avatar_preset';
 const avatarPresets: { id: number; color: string; label: string }[] = [
@@ -146,15 +164,20 @@ const inviteVisible = ref(false);
 const inviteCode = ref('ABC123XYZ');
 
 const loadPointsFromBackend = async () => {
-  const id = Number(userStore.user_id || 0);
+  const id = resolveSessionUserId();
   if (!id)
     return;
   try {
     const user = await UserApi.getUser(id);
     const pts = user.points ?? 0;
+    const nameNorm = user.name != null ? String(user.name).trim() : '';
+    const phoneNorm = user.phone != null ? String(user.phone).trim() : '';
     userStore.setInfo({
+      user_id: String(user.id),
       points: pts,
-      user_name: user.name || '',
+      // name 为空时不要清空本地已有昵称；phone 为空时保留本地手机号，避免「未登录用户」
+      user_name: nameNorm || String(userStore.user_name ?? '').trim() || '',
+      phone: phoneNorm || String(userStore.phone ?? '').trim() || '',
       isAdmin: (user as any).isAdmin ?? userStore.isAdmin,
       companyId: user.companyId ?? userStore.companyId,
       companyName: (user as any).companyName ?? userStore.companyName,
@@ -192,7 +215,7 @@ const loadCompanyName = async () => {
 };
 
 const loadOngoingOrders = async () => {
-  const userId = Number(userStore.user_id || 0);
+  const userId = resolveSessionUserId();
   if (!userId) {
     ongoingOrdersCount.value = 0;
     return;
@@ -209,7 +232,7 @@ const loadOngoingOrders = async () => {
 };
 
 const loadCouponCount = async () => {
-  const userId = Number(userStore.user_id || 0);
+  const userId = resolveSessionUserId();
   if (!userId) {
     couponCount.value = 0;
     return;

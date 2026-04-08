@@ -108,6 +108,10 @@ export class Order {
   @Column({ name: 'line_items_json', type: 'json', nullable: true })
   lineItemsJson?: any | null;
 
+  /** 是否已按「订单完成」发放过积分（1 元实付 = 1 分，与 pay_amount 一致） */
+  @Column({ name: 'points_awarded', type: 'tinyint', unsigned: true, default: 0 })
+  pointsAwarded: number;
+
   @Column({ name: 'createtime', type: 'int', nullable: true })
   createtime: number | null;
 }

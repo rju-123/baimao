@@ -304,7 +304,7 @@ onShow(() => {
 }
 
 .card-tag {
-  padding: 24rpx 20rpx;
+  padding: 24rpx 8rpx 24rpx 0;
   display: flex;
   align-items: center;
 }
@@ -315,6 +315,7 @@ onShow(() => {
   padding: 8rpx 20rpx;
   border: 1rpx solid #007AFF;
   border-radius: 8rpx;
+  transform: translateX(calc(-20rpx - 20px));
 }
 
 .tag-gray {

@@ -12,17 +12,14 @@
       </view>
       <view class="header-meta">
         <view class="meta-row">
-          <text class="meta-icon">📋</text>
           <text class="meta-label">订单号</text>
           <text class="meta-value">{{ order.orderNo }}</text>
         </view>
         <view class="meta-row">
-          <text class="meta-icon">📅</text>
           <text class="meta-label">创建时间</text>
           <text class="meta-value">{{ formatOrderTime(order) }}</text>
         </view>
         <view class="meta-row">
-          <text class="meta-icon">🕐</text>
           <text class="meta-label">交付时间</text>
           <text class="meta-value">{{ deliveryTimeDisplay }}</text>
         </view>
@@ -32,7 +29,6 @@
     <!-- 订单内容：每个产品 名称、订单详情、单价×数量、小计 -->
     <view class="card card-content">
       <view class="section-title">
-        <text class="section-icon">📦</text>
         订单内容
       </view>
       <view
@@ -68,7 +64,6 @@
     <!-- 客户信息（来自后台产品信息） -->
     <view class="card" v-if="customerInfoDisplay">
       <view class="section-title">
-        <text class="section-icon">👥</text>
         客户信息
       </view>
       <view class="info-row">
@@ -79,7 +74,6 @@
     <!-- 接单人 -->
     <view class="card">
       <view class="section-title">
-        <text class="section-icon">👤</text>
         接单人
       </view>
       <view class="info-row">
@@ -95,10 +89,9 @@
     <!-- 电子合同 -->
     <view class="card">
       <view class="section-title">
-        <text class="section-icon">📄</text>
         电子合同
       </view>
-      <view v-if="contractPdfUrl" class="contract-actions">
+      <view v-if="contractFileUrl" class="contract-actions">
         <button class="contract-btn primary contract-btn-download" @tap="downloadContract">
           下载
         </button>
@@ -141,8 +134,8 @@ function normalizeOrder(raw: OrderApi.Order | Record<string, unknown>): OrderApi
   };
 }
 
-/** 电子合同 PDF 地址（归一化后） */
-const contractPdfUrl = computed(() => {
+/** 电子合同文件地址（归一化后） */
+const contractFileUrl = computed(() => {
   const o = order.value;
   if (!o) return '';
   const u = (o as Record<string, unknown>).contractUrl ?? (o as Record<string, unknown>).contract_url;
@@ -302,7 +295,7 @@ async function fetchData(id: number) {
 async function fetchDataAndEnsureContract(id: number) {
   contractEnsurePending.value = false;
   await fetchData(id);
-  if (contractPdfUrl.value)
+  if (contractFileUrl.value)
     return;
 
   contractEnsurePending.value = true;
@@ -325,7 +318,7 @@ async function fetchDataAndEnsureContract(id: number) {
   }
 }
 
-/** 合同 PDF 由 NestJS 的 /uploads 提供，与 VITE_API_BASE_URL 同源 */
+/** 合同文件由 NestJS 的 /uploads 提供，与 VITE_API_BASE_URL 同源 */
 function ensureAbsoluteUrl(url: string): string {
   if (!url) return url;
   if (url.startsWith('http://') || url.startsWith('https://')) return url;
@@ -334,11 +327,11 @@ function ensureAbsoluteUrl(url: string): string {
 }
 
 function downloadContract() {
-  if (!contractPdfUrl.value) {
+  if (!contractFileUrl.value) {
     toast('暂未上传电子合同');
     return;
   }
-  const url = ensureAbsoluteUrl(contractPdfUrl.value);
+  const url = ensureAbsoluteUrl(contractFileUrl.value);
   uni.downloadFile({
     url,
     success() { toast('电子合同已开始下载，请在微信中查看文件'); },

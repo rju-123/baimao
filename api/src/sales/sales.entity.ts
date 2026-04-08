@@ -8,11 +8,16 @@ export class Sales {
   @Column({ type: 'varchar', length: 20 })
   phone: string;
 
-  @Column({ type: 'varchar', length: 64, default: '' })
+  /** 显式列名，避免驱动/元数据在部分 MySQL 版本下对属性名 name 映射异常 */
+  @Column({ name: 'name', type: 'varchar', length: 64, default: '' })
   name: string;
 
   @Column({ name: 'company_id', type: 'int', unsigned: true, nullable: true })
   companyId: number | null;
+
+  /** 进行中订单数（与 FastAdmin 表结构一致，避免 ORM 列映射偏差） */
+  @Column({ name: 'ongoing_orders', type: 'int', unsigned: true, default: 0 })
+  ongoingOrders: number;
 
   /**
    * 是否管理员：1=管理员 0=普通

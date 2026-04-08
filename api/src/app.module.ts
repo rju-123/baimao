@@ -29,23 +29,31 @@ import { CommonModule } from './common/common.module';
 
 @Module({
   imports: [
-    // 默认连接：继续使用 SQLite，给用户、地址、优惠券等模块使用
-    TypeOrmModule.forRoot({
-      type: 'better-sqlite3',
-      database: 'database.sqlite',
-      entities: [User, Address],
-      synchronize: true,
-    }),
     // 第二个连接：连接到后台管理系统使用的 MySQL，专门用于产品、订单、公司、销售与积分商城
     TypeOrmModule.forRoot({
       name: 'mysql',
       type: 'mysql',
-      host: '127.0.0.1',
-      port: 3306,
-      username: 'root',
-      password: 'admin123',
-      database: 'baimao_admin',
-      entities: [Product, Order, Company, Sales, PointsMallItem, ExchangeRecord, PointsCode, KnowledgeArticle, Coupon, CouponTemplate],
+      host: process.env.DB_HOST ?? '127.0.0.1',
+      port: Number(process.env.DB_PORT ?? 3306),
+      username: process.env.DB_USERNAME ?? 'baimaoadmin',
+      password: process.env.DB_PASSWORD ?? 'baimaoadmin',
+      // MySQL 实际库名以 FastAdmin 导入/配置为准
+      database: process.env.DB_DATABASE ?? 'baimao_admin',
+      entities: [
+        // User/Address 也切到 mysql，避免依赖 sqlite 默认连接
+        User,
+        Address,
+        Product,
+        Order,
+        Company,
+        Sales,
+        PointsMallItem,
+        ExchangeRecord,
+        PointsCode,
+        KnowledgeArticle,
+        Coupon,
+        CouponTemplate,
+      ],
       synchronize: false,
     }),
     UsersModule,

@@ -1,1 +1,0 @@
-SELECT * FROM users WHERE phone = '13409238776';

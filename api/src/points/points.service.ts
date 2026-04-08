@@ -1,6 +1,6 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { UsersService } from '../users/users.service';
 import { PointsMallItem } from './points-mall-item.entity';
 import { ExchangeRecord } from './exchange-record.entity';
@@ -44,15 +44,29 @@ export class PointsService implements OnModuleInit {
     return this.itemsRepo.findOne({ where: { id } });
   }
 
-  listRecords(userId: number) {
-    return this.recordsRepo.find({
+  async listRecords(userId: number) {
+    const records = await this.recordsRepo.find({
       where: { userId },
       order: { createdAt: 'DESC' },
     });
+    const ids = [...new Set(records.map(r => r.itemId).filter(id => id > 0))];
+    if (ids.length === 0) {
+      return records.map(r => ({ ...r, itemName: '' as string }));
+    }
+    const items = await this.itemsRepo.find({ where: { id: In(ids) } });
+    const nameMap = new Map(items.map(i => [i.id, i.name]));
+    return records.map(r => ({
+      ...r,
+      itemName: nameMap.get(r.itemId) ?? '',
+    }));
   }
 
-  getRecord(id: number) {
-    return this.recordsRepo.findOne({ where: { id } });
+  async getRecord(id: number) {
+    const record = await this.recordsRepo.findOne({ where: { id } });
+    if (!record)
+      return null;
+    const item = await this.itemsRepo.findOne({ where: { id: record.itemId } });
+    return { ...record, itemName: item?.name ?? '' };
   }
 
   async createExchange(dto: CreateExchangeDto) {
@@ -128,7 +142,7 @@ export class PointsService implements OnModuleInit {
       }
     }
 
-    return saved;
+    return { ...saved, itemName: item.name };
   }
 }
 

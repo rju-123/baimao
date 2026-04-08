@@ -232,8 +232,8 @@
       "pagePath": "pages/sales/created/index",
       "text": "我的订单"
     }, {
-      "iconPath": "static/images/tabbar/icon_list.png",
-      "selectedIconPath": "static/images/tabbar/icon_list_selected.png",
+      "iconPath": "static/images/tabbar/icon_cart.png",
+      "selectedIconPath": "static/images/tabbar/icon_cart_selected.png",
       "pagePath": "pages/sales/cart/index",
       "text": "购物车"
     }, {

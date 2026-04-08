@@ -2,7 +2,6 @@
   <view class="page">
     <view class="search-wrapper">
       <view class="search-box">
-        <text class="search-icon">🔍</text>
         <input
           v-model="keyword"
           class="search-input"
@@ -143,12 +142,6 @@ onShow(() => {
   padding: 24rpx 28rpx;
   border-radius: 24rpx;
   background-color: #f2f2f7;
-}
-
-.search-icon {
-  margin-right: 12rpx;
-  font-size: 26rpx;
-  color: var(--theme-text-subtitle);
 }
 
 .search-input {

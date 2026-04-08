@@ -5,10 +5,11 @@ import { UsersService } from './users.service';
 import { UsersController } from './users.controller';
 import { SalesModule } from '../sales/sales.module';
 import { CompaniesModule } from '../companies/companies.module';
+import { WechatService } from '../wechat/wechat.service';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([User]), SalesModule, CompaniesModule],
-  providers: [UsersService],
+  imports: [TypeOrmModule.forFeature([User], 'mysql'), SalesModule, CompaniesModule],
+  providers: [UsersService, WechatService],
   controllers: [UsersController],
   exports: [UsersService],
 })

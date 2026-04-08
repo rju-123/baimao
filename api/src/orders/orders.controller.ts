@@ -56,6 +56,31 @@ export class OrdersController {
     }
   }
 
+  /**
+   * 后台将订单标为「已完成」后由 FastAdmin 回调：按实付金额 1:1 发放积分（仅一次）
+   */
+  @Post(':id/award-completion-points')
+  async awardCompletionPoints(@Param('id') id: string) {
+    const result = await this.ordersService.awardCompletionPointsIfCompleted(Number(id));
+    const msg
+      = result.awarded
+        ? '积分已发放'
+        : result.reason === 'already_awarded'
+          ? '该订单已发放过完成积分'
+          : result.reason === 'not_completed'
+            ? '订单非已完成状态，未发放积分'
+            : result.reason === 'not_found'
+              ? '订单不存在'
+              : result.reason === 'missing_column_points_awarded'
+                ? '数据库未升级 points_awarded 字段'
+                : '未发放积分';
+    return {
+      code: 200,
+      message: msg,
+      result,
+    };
+  }
+
   @Get(':id')
   async detail(@Param('id') id: string) {
     const order = await this.ordersService.findById(Number(id));

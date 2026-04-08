@@ -11,8 +11,8 @@ import { User } from '../users/user.entity';
   imports: [
     // MySQL 连接：公司 / 销售 / 订单
     TypeOrmModule.forFeature([Company, Sales, Order], 'mysql'),
-    // 默认（SQLite）连接：用户表，供同步清空 companyId 使用
-    TypeOrmModule.forFeature([User]),
+    // 用户表也切到 mysql，避免依赖 sqlite 默认连接
+    TypeOrmModule.forFeature([User], 'mysql'),
   ],
   providers: [CompaniesService],
   controllers: [CompaniesController],

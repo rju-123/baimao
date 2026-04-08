@@ -435,6 +435,12 @@ async function submit() {
     // 3) 清空购物车并用 reLaunch 进入「我的订单」，清空页面栈，避免返回时回到购物车/确认页
     submittedSuccess.value = true;
     uni.removeStorageSync(CART_STORAGE_KEY);
+    try {
+      await userStore.refreshUserInfo();
+    }
+    catch {
+      // 忽略刷新失败，积分已在服务端入账
+    }
     toast('下单成功', 'success');
     setTimeout(() => {
       uni.reLaunch({ url: '/pages/sales/created/index' });

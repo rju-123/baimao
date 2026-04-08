@@ -1,4 +1,4 @@
-import type { LoginByCodeReq, LoginByCodeRes, LoginReq, LoginRes, ProfileReq, ProfileRes, UserInfoRes } from './types';
+import type { LoginByCodeReq, LoginByCodeRes, LoginReq, LoginRes, ProfileReq, ProfileRes, UserInfoRes, WechatPhoneLoginReq } from './types';
 /**
 * 用户信息相关接口
 */
@@ -19,6 +19,10 @@ export const loginByCode = (data: LoginByCodeReq) => post<LoginByCodeRes>('/user
 
 /** 退出登录（占位） */
 export const logout = () => post<CommonRes>('/user/logout');
+
+/** 微信手机号快速验证登录 */
+export const wechatPhoneLogin = (data: WechatPhoneLoginReq) =>
+  post<LoginRes>('/auth/wechat-phone-login', { data, custom: { auth: false } });
 
 /** 更新当前用户所属公司与姓名（对接 PUT /users/:id/company） */
 export const updateCompany = (userId: number, companyId: number, name?: string) =>

@@ -75,6 +75,8 @@ export class OrdersService {
     });
     const saved = await this.ordersRepo.save(entity);
 
+    // 积分在后台将订单标为「已完成」时发放（见 awardCompletionPointsIfCompleted），下单时不发
+
     // 扣减库存（简单演示，未加事务控制）
     if (typeof product.inventory === 'number') {
       product.inventory -= dto.quantity;
@@ -155,6 +157,55 @@ export class OrdersService {
   }
 
   /**
+   * 订单在后台变为「已完成」后调用：按实付金额 1:1 发放积分（向下取整），且仅发放一次。
+   * FastAdmin 保存订单后会请求 POST /orders/:id/award-completion-points。
+   */
+  async awardCompletionPointsIfCompleted(orderId: number): Promise<{
+    awarded: boolean;
+    points: number;
+    reason?: string;
+  }> {
+    let order: Order | null;
+    try {
+      order = await this.ordersRepo.findOne({ where: { id: orderId } });
+    }
+    catch (e: any) {
+      const msg = String(e?.message || e || '');
+      if (msg.includes('Unknown column') && msg.includes('points_awarded')) {
+        this.logger.error(
+          `订单 ${orderId} 积分发放跳过：库表缺少 points_awarded 列，请执行 api/sql/upgrade_fa_order_points_awarded.sql`,
+        );
+        return { awarded: false, points: 0, reason: 'missing_column_points_awarded' };
+      }
+      throw e;
+    }
+    if (!order)
+      return { awarded: false, points: 0, reason: 'not_found' };
+    if (String(order.status ?? '').trim() !== 'completed')
+      return { awarded: false, points: 0, reason: 'not_completed' };
+    if (Number(order.pointsAwarded ?? 0) === 1)
+      return { awarded: false, points: 0, reason: 'already_awarded' };
+
+    const yuan = Number(order.payAmount);
+    if (!Number.isFinite(yuan) || yuan <= 0)
+      return { awarded: false, points: 0, reason: 'zero_amount' };
+    const points = Math.floor(yuan);
+    if (points <= 0)
+      return { awarded: false, points: 0, reason: 'zero_points' };
+
+    try {
+      await this.usersService.addPoints(order.userId, points);
+      await this.ordersRepo.update({ id: order.id }, { pointsAwarded: 1 });
+      this.logger.log(`订单 ${orderId} 已完成，用户 ${order.userId} 获得积分 ${points}（实付 ${yuan} 元）`);
+      return { awarded: true, points };
+    }
+    catch (e: any) {
+      this.logger.warn(`订单 ${orderId} 完成积分发放失败: ${e?.message || e}`);
+      return { awarded: false, points: 0, reason: String(e?.message || e) };
+    }
+  }
+
+  /**
    * 订单创建成功后生成 PDF 合同（等待完成后再返回，便于前端立刻展示）；失败不影响订单本身，仅打日志
    */
   private async tryGenerateContractAfterCreate(orderId: number): Promise<void> {
@@ -167,16 +218,13 @@ export class OrdersService {
   }
 
   async findAllByUser(userId: number, status?: string) {
-    // 先根据 userId 获取当前用户的最新公司信息
     const user = await this.usersService.findById(userId);
-    // 没有用户或尚未选择公司时，不返回任何订单，引导其先选择公司
-    if (!user || !user.companyId)
+    if (!user)
       return [];
 
-    const where: any = {
-      userId,
-      companyId: user.companyId,
-    };
+    // 只按 userId 查：历史订单常见 company_id 为空或与当前「已选公司」不一致（同步自 fa_sales），
+    // 若再按 companyId 过滤会导致「我的订单」为空。
+    const where: any = { userId };
     if (status)
       where.status = status;
 
@@ -220,9 +268,10 @@ export class OrdersService {
             'o.status',
             'o.contractStatus',
             'o.contractUrl',
+            'o.pointsAwarded',
             'o.createtime',
           ])
-          .where('o.userId = :userId AND o.companyId = :companyId', { userId, companyId: user.companyId })
+          .where('o.userId = :userId', { userId })
           .orderBy('o.createtime', 'DESC');
         if (status)
           qb.andWhere('o.status = :status', { status });
@@ -286,6 +335,7 @@ export class OrdersService {
             'o.status',
             'o.contractStatus',
             'o.contractUrl',
+            'o.pointsAwarded',
             'o.createtime',
           ])
           .where('o.id = :id', { id })
@@ -296,26 +346,29 @@ export class OrdersService {
   }
 
   /**
-   * 生成唯一订单号 ORD-{年}-{序号}，基于当年已有最大订单号递增，避免与历史/后台数据重复
+   * 生成唯一订单号：BMSH-YYYYMMDDXXXX（XXXX 为四位随机数字）
    */
   private async generateOrderNo(): Promise<string> {
-    const year = new Date().getFullYear();
-    const prefix = `ORD-${year}-`;
-    const raw = await this.ordersRepo
-      .createQueryBuilder('o')
-      .select('MAX(o.orderNo)', 'maxNo')
-      .where('o.orderNo LIKE :prefix', { prefix: `${prefix}%` })
-      .getRawOne<{ maxNo: string | null }>();
-    const maxNo = raw?.maxNo ?? null;
-    let seq = 1;
-    if (maxNo && typeof maxNo === 'string' && maxNo.startsWith(prefix)) {
-      const numPart = maxNo.slice(prefix.length);
-      const num = parseInt(numPart, 10);
-      if (!Number.isNaN(num) && num >= 1)
-        seq = num + 1;
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, '0');
+    const d = String(now.getDate()).padStart(2, '0');
+    const datePart = `${y}${m}${d}`;
+    const prefix = `BMSH-${datePart}`;
+
+    // 随机 4 位数字有碰撞概率，做有限次重试确保唯一
+    for (let i = 0; i < 20; i++) {
+      const rand = Math.floor(Math.random() * 10000);
+      const suffix = String(rand).padStart(4, '0');
+      const candidate = `${prefix}${suffix}`;
+      const exists = await this.ordersRepo.findOne({ where: { orderNo: candidate } });
+      if (!exists)
+        return candidate;
     }
-    const seqStr = String(seq).padStart(3, '0');
-    return `${prefix}${seqStr}`;
+
+    // 极端并发下兜底：用毫秒后四位继续保证格式
+    const fallback = String(Date.now() % 10000).padStart(4, '0');
+    return `${prefix}${fallback}`;
   }
 }
 

@@ -8,7 +8,7 @@ import { UpdateAddressDto } from './dto/update-address.dto';
 @Injectable()
 export class AddressesService {
   constructor(
-    @InjectRepository(Address)
+    @InjectRepository(Address, 'mysql')
     private readonly addressesRepo: Repository<Address>,
   ) {}
 

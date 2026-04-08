@@ -102,8 +102,18 @@ function responseInterceptors(http: Request) {
         uni.hideLoading();
       }
       if (custom?.toast !== false) {
-        const message = response.statusCode ? showMessage(response.statusCode) : '网络连接异常,请稍后再试!';
-        uni.showToast({ title: message, icon: 'none' });
+        const wxErr = typeof response?.errMsg === 'string' ? response.errMsg : '';
+        const hint
+          = wxErr.includes('domain')
+          || wxErr.includes('域名')
+          || wxErr.includes('url not in domain')
+          ? '请在微信公众平台配置 request 合法域名，并使用 HTTPS 备案域名（真机不支持未配置的 http/IP）'
+          : '';
+        const message = hint
+          || wxErr
+          || (response.statusCode ? showMessage(response.statusCode) : '')
+          || '网络连接异常,请稍后再试!';
+        uni.showToast({ title: message.length > 40 ? `${message.slice(0, 40)}…` : message, icon: 'none', duration: 3500 });
       }
       return Promise.reject(response);
     },

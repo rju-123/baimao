@@ -36,7 +36,7 @@
           </view>
         </view>
         <view class="time-row">
-          {{ item.createdAt }}
+          {{ formatExchangeDate(item.createdAt) }}
         </view>
       </view>
     </scroll-view>
@@ -76,9 +76,21 @@ const fetchRecords = async () => {
 };
 
 const itemName = (item: ExchangeRecord) => {
-  // 后端暂未提供商品名称快照，这里只返回 ID 占位，可在后续扩展为 join 商品表
-  return `商品 #${item.itemId}`;
+  const n = String((item as any)?.itemName ?? '').trim();
+  return n || `商品 #${item.itemId}`;
 };
+
+function formatExchangeDate(raw: any): string {
+  if (!raw)
+    return '—';
+  const d = raw instanceof Date ? raw : new Date(String(raw));
+  if (Number.isNaN(d.getTime()))
+    return '—';
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}.${m}.${day}`;
+}
 
 const statusText = (item: ExchangeRecord) => {
   if (item.kind === 'virtual')

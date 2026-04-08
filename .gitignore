@@ -21,6 +21,7 @@ pnpm-debug.log*
 # Env (keep .env.example if any)
 .env.local
 .env.*.local
+api/.env
 
 # SQLite (optional: track or ignore)
 # *.sqlite
@@ -37,6 +38,14 @@ admin/application/admin/command/Install/install.lock
 
 # SQLite (local dev DB)
 api/database.sqlite
+
+# Local archives / full DB dumps (do not commit)
+*.zip
+/baimao_admin.sql
+
+# FastAdmin install artifacts (do not commit)
+admin/public/install.php
+admin/public/check_lock.php
 
 # Lock files (optional: uncomment to use single package manager)
 # package-lock.json

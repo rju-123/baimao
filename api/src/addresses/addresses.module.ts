@@ -5,7 +5,7 @@ import { AddressesService } from './addresses.service';
 import { AddressesController } from './addresses.controller';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Address])],
+  imports: [TypeOrmModule.forFeature([Address], 'mysql')],
   providers: [AddressesService],
   controllers: [AddressesController],
 })

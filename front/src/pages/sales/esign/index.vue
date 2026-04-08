@@ -65,6 +65,7 @@
 import { onLoad } from '@dcloudio/uni-app';
 import { get, post } from '@/utils/request';
 import { toast } from '@/utils/uni-helpers';
+import useUserStore from '@/store/modules/user';
 
 const flowId = ref<string>('');
 const loading = ref(false);
@@ -91,6 +92,7 @@ interface FlowDetail {
 }
 
 const flow = ref<FlowDetail | null>(null);
+const userStore = useUserStore();
 
 function formatAmount(val: number | string | null | undefined): string {
   const n = Number(val);
@@ -132,6 +134,12 @@ async function complete() {
     try {
       uni.removeStorageSync(CART_STORAGE_KEY);
     } catch {}
+    try {
+      await userStore.refreshUserInfo();
+    }
+    catch {
+      // 忽略刷新失败，积分已在服务端入账
+    }
     toast('签署完成，订单已创建', 'success');
     setTimeout(() => {
       uni.reLaunch({ url: '/pages/sales/created/index' });

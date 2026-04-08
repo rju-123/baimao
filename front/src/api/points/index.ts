@@ -17,6 +17,10 @@ export interface ExchangeRecord {
   id: number;
   userId: number;
   itemId: number;
+  /**
+   * 商品名称（由后端拼接返回，用于前端展示）
+   */
+  itemName?: string;
   quantity: number;
   pointsSpent: number;
   /**

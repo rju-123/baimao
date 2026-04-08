@@ -9,7 +9,7 @@ import { PartnerController } from './partner.controller';
 @Module({
   imports: [
     TypeOrmModule.forFeature([Company, Sales], 'mysql'),
-    TypeOrmModule.forFeature([User]),
+    TypeOrmModule.forFeature([User], 'mysql'),
   ],
   providers: [PartnerService],
   controllers: [PartnerController],

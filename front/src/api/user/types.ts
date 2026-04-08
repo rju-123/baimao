@@ -23,6 +23,7 @@ export interface UserInfoRes {
   isAdmin: boolean;
   companyId: number | null;
   points: number;
+  companyName?: string | null;
 }
 
 export interface LoginRes {
@@ -36,4 +37,9 @@ export interface LoginByCodeReq {
 
 export interface LoginByCodeRes {
   [key: string]: any;
+}
+
+/** 微信手机号快速验证登录请求体 */
+export interface WechatPhoneLoginReq {
+  code: string;
 }

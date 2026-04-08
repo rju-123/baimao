@@ -5,7 +5,6 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
 import Docxtemplater from 'docxtemplater';
 import PizZip from 'pizzip';
-import { convert as libConvert } from 'libreoffice-convert';
 import { Order } from '../orders/order.entity';
 import { Company } from '../companies/company.entity';
 import { Product } from '../products/product.entity';
@@ -55,7 +54,7 @@ export class ContractService {
   ) {}
 
   /**
-   * 根据订单生成 PDF 合同，写入 uploads/contracts/，并更新订单的 contract_url、contract_status
+   * 根据订单生成 Word 合同文件，写入 uploads/contracts/，并更新订单的 contract_url、contract_status
    */
   async generateContract(orderId: number): Promise<string> {
     const order = await this.findOrderSafe(orderId);
@@ -101,9 +100,8 @@ export class ContractService {
 
     const templateFile = await this.resolveContractTemplateFile(order);
     const docxBuffer = this.fillTemplate(orderData, templateFile);
-    const pdfBuffer = await this.convertToPdf(docxBuffer);
 
-    const filename = `${orderId}_${Date.now()}.pdf`;
+    const filename = `${orderId}_${Date.now()}.docx`;
     const relPath = `uploads/contracts/${filename}`;
     const absPath = join(process.cwd(), relPath);
     const dir = dirname(absPath);
@@ -111,7 +109,7 @@ export class ContractService {
     if (!existsSync(dir)) {
       mkdirSync(dir, { recursive: true });
     }
-    writeFileSync(absPath, pdfBuffer);
+    writeFileSync(absPath, docxBuffer);
 
     await this.ordersRepo.update(orderId, {
       contractUrl: relPath,
@@ -241,18 +239,6 @@ export class ContractService {
     doc.setData(orderData);
     doc.render();
     return doc.getZip().generate({ type: 'nodebuffer' }) as Buffer;
-  }
-
-  private convertToPdf(docxBuffer: Buffer): Promise<Buffer> {
-    return new Promise((resolve, reject) => {
-      libConvert(docxBuffer, '.pdf', undefined, (err: Error | null, pdfBuffer: Buffer) => {
-        if (err) {
-          reject(new Error(`PDF 转换失败，请确保已安装 LibreOffice: ${err.message}`));
-        } else {
-          resolve(pdfBuffer);
-        }
-      });
-    });
   }
 
   /**

@@ -16,7 +16,7 @@ export class CompaniesService {
     private readonly salesRepo: Repository<Sales>,
     @InjectRepository(Order, 'mysql')
     private readonly ordersRepo: Repository<Order>,
-    @InjectRepository(User)
+    @InjectRepository(User, 'mysql')
     private readonly usersRepo: Repository<User>,
   ) {}
 

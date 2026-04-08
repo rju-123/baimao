@@ -11,7 +11,7 @@ export class PartnerService {
   constructor(
     @InjectRepository(Company, 'mysql')
     private readonly companyRepo: Repository<Company>,
-    @InjectRepository(User)
+    @InjectRepository(User, 'mysql')
     private readonly userRepo: Repository<User>,
     @InjectRepository(Sales, 'mysql')
     private readonly salesRepo: Repository<Sales>,

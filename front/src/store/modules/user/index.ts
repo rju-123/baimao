@@ -8,7 +8,7 @@ import { clearToken, setToken } from '@/utils/auth';
 const useUserStore = defineStore('user', {
   state: (): UserState => ({
     user_id: '',
-    user_name: '江阳小道',
+    user_name: '',
     avatar: '',
     token: '',
     currentRole: '',
@@ -57,9 +57,12 @@ const useUserStore = defineStore('user', {
         return;
       try {
         const user = await UserApi.getUser(Number(id));
+        const nameTrim = user.name != null ? String(user.name).trim() : '';
+        const phoneTrim = user.phone != null ? String(user.phone).trim() : '';
         this.setInfo({
-          user_name: user.name || '',
-          phone: user.phone,
+          user_id: String(user.id),
+          user_name: nameTrim || (this.user_name != null ? String(this.user_name).trim() : ''),
+          phone: phoneTrim || (this.phone != null ? String(this.phone).trim() : ''),
           companyId: user.companyId ?? undefined,
           isAdmin: (user as any).isAdmin ?? false,
           points: user.points ?? 0,
@@ -97,6 +100,28 @@ const useUserStore = defineStore('user', {
           reject(error);
         });
       });
+    },
+    /** 微信手机号快速验证登录：使用微信返回的 code 调用后端 /auth/wechat-phone-login */
+    async wechatPhoneLogin(code: string) {
+      const raw = String(code ?? '').trim();
+      if (!raw)
+        throw new Error('缺少微信手机号授权 code');
+      const res = await UserApi.wechatPhoneLogin({ code: raw });
+      const token = res.token;
+      if (token)
+        setToken(token);
+      this.setInfo({
+        user_id: String(res.user.id),
+        user_name: res.user.name || '',
+        phone: res.user.phone,
+        companyId: res.user.companyId,
+        isAdmin: res.user.isAdmin,
+        points: (res.user as any).points ?? 0,
+        token,
+        currentRole: (res.user.role as any) || 'sales',
+      });
+      this.normalizeUserId();
+      return res;
     },
     // Logout
     async logout() {

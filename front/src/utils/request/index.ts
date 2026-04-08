@@ -19,6 +19,18 @@ function normalizeApiBaseUrl(raw: string | undefined): string {
 export function setupRequest() {
   http.setConfig((defaultConfig: any) => {
     defaultConfig.baseURL = normalizeApiBaseUrl(import.meta.env.VITE_API_BASE_URL);
+    // #ifdef MP-WEIXIN
+    {
+      const b = String(defaultConfig.baseURL || '');
+      if (b && (b.startsWith('http://') || /:\/\/\d{1,3}\./.test(b))) {
+        // eslint-disable-next-line no-console
+        console.warn(
+          '[API] 当前为 http 或 IP 地址，微信体验版/真机将拦截请求。请使用 HTTPS 备案域名，并在公众平台配置 request 合法域名。',
+          b,
+        );
+      }
+    }
+    // #endif
     // #ifdef H5
     if (import.meta.env.VITE_APP_PROXY === 'true') {
       defaultConfig.baseURL = import.meta.env.VITE_API_PREFIX;
